@@ -1,0 +1,420 @@
+# ================ RAG Pipeline .gitignore ================
+# Optimized for a monorepo with Python FastAPI + Next.js + Docker + Kubernetes
+
+# ================ Python ================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.venv*/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ================ Node.js / pnpm / Turborepo ================
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+
+# Turborepo
+.turbo/
+turbo-*.log
+
+# pnpm
+pnpm-lock.yaml
+.pnpm-debug.log*
+
+# Next.js
+.next/
+next-env.d.ts
+
+# Nuxt.js
+.nuxt/
+
+# Vite
+.vite/
+vite.config.ts.dep-info.json
+
+# Rollup
+.rollup/
+
+# Metro (React Native)
+.metro/
+
+# Yarn
+yarn-error.log*
+yarn.lock
+.pnp.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ================ Docker ================
+.dockerignore
+.docker/
+
+# ================ Docker Compose ================
+docker-compose*.yml
+.docker-compose.yml
+
+# Traefik
+traefik*.yml
+
+# ================ Database ================
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.dump
+
+# Alembic (database migrations)
+alembic/versions/*.py
+alembic/versions/*.pyc
+
+# ================ Qdrant Vector Database ================
+qdrant/storage/
+qdrant/*.bin
+qdrant/*.idx
+qdrant/*.log
+qdrant/*.wal
+
+# ================ Prometheus / Grafana / Tempo ================
+prometheus/rules/
+prometheus/wal/
+grafana/data/
+grafana/plugins/
+tempo/data/
+
+# ================ LangSmith / Trace Observability ================
+.langsmith/
+langsmith/
+
+# ================ Sentry (Error Tracking) ================
+.sentry-cli
+.sentryclirc
+
+# ================ API Keys and Secrets ================
+.env
+.env.*
+!.env.example
+
+# .env files - uncomment to ignore ALL .env files
+# .env*
+# *.env
+
+# ================ IDE ================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ================ OS ================
+.DS_Store
+Thumbs.db
+.DS_Store?
+
+# ================ Cache and temporary files ================
+.cache/
+.temp/
+.tmp/
+*.cache
+*.tmp
+*.temp
+
+# ================ Build artifacts ================
+*.log
+logs/
+*.pyc
+*.tsbuildinfo
+
+# ================ Documentation build artifacts ================
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# ================ AI / ML Training Artifacts ================
+models/
+checkpoints/
+*.h5
+*.keras
+*.pb
+*.pbtxt
+*.ckpt
+*.pkl
+*.joblib
+*.pkl*
+*.pt
+*.pth
+*.onnx
+*.tflite
+*.safetensors
+
+# ================ Docker build cache ================
+.docker/build-cache/
+.docker/tmp/
+
+# ================ Docker Compose volumes ================
+docker-compose-volumes/
+docker-data/
+
+# ================ Helm Charts ================
+charts/charts/
+charts/tmp/
+charts/cache/
+
+# ================ Kubernetes ================
+kubeconfig
+kubeconfig.*
+
+# ================ AWS ================
+.aws/
+.awscli/
+.aws/config
+.aws/credentials
+
+# ================ Azure ================
+.azure/
+
+# ================ GCP ================
+.gcloud/
+gcloud-local/
+
+# ================ Terraform ================
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfplan
+
+# ================ CI/CD ================
+.github/
+.github/
+.gitlab-ci.yml
+.gitlab/
+.travis.yml
+appveyor.yml
+circle.yml
+buildkite.yml
+bitbucket-pipelines.yml
+drone.yml
+semaphore.yml
+teamcity.yml
+bamboo.yml
+jenkins.yml
+
+# ================ Git ================
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+# ================ Scripts ================
+scripts/
+scripts/*.sh
+scripts/*.py
+
+# ================ AI Workspace ================
+# Keep documentation but ignore temporary files
+ai-workspace/
+ai-workspace/*.tmp
+ai-workspace/*.temp
+ai-workspace/*.log
+
+# ================ Packages ================
+packages/
+packages/*/dist/
+packages/*/build/
+packages/*/node_modules/
+
+# ================ Apps ================
+apps/
+apps/*/dist/
+apps/*/build/
+apps/*/node_modules/
+apps/*/venv/
+apps/*/.venv/
+
+# ================ Logs ================
+*.log
+logs/
+logs/*.log
+
+# ================ Coverage reports ================
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# ================ Jupyter Notebook ================
+.ipynb_checkpoints
+
+# ================ Pyenv ================
+.python-version
+
+# ================ Poetry ================
+poetry.lock
+
+# ================ PDM ================
+.pdm.toml
+
+# ================ PEP 582 ================
+__pypackages__/
+
+# ================ Celery ================
+celerybeat-schedule
+celerybeat.pid
+
+# ================ SageMath ================
+*.sage.py
+
+# ================ Environments ================
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ================ Spyder ================
+.spyderproject
+.spyproject
+
+# ================ Rope ================
+.ropeproject
+
+# ================ mkdocs ================
+/site
+
+# ================ mypy ================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ================ Pyre ================
+.pyre/
+
+# ================ Pytype ================
+.pytype/
+
+# ================ Cython ================
+cython_debug/
+
+# ================ End of RAG Pipeline .gitignore ================
