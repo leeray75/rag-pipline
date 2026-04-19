@@ -1,0 +1,323 @@
+{
+  "phase": 6,
+  "title": "Phase 6 — JSON Generation, Chunking & Vector Ingestion",
+  "dependencies": {
+    "python": {
+      "fastembed": ">=0.8.0,<1.0.0",
+      "tiktoken": ">=0.12.0,<1.0.0"
+    },
+    "node": {},
+    "infrastructure": {}
+  },
+  "files": [
+    "rag-pipeline/apps/api/src/ingest/chunker.py",
+    "rag-pipeline/apps/api/src/ingest/chunking_pipeline.py",
+    "rag-pipeline/apps/api/src/ingest/qdrant_ingest.py",
+    "rag-pipeline/apps/api/src/embeddings/fastembed_service.py",
+    "rag-pipeline/apps/api/src/embeddings/config.py",
+    "rag-pipeline/apps/api/src/schemas/chunk.py",
+    "rag-pipeline/apps/api/src/schemas/collection.py",
+    "rag-pipeline/apps/api/src/models/chunk.py",
+    "rag-pipeline/apps/api/src/workers/ingest_tasks.py",
+    "rag-pipeline/apps/api/src/routers/ingest.py",
+    "rag-pipeline/apps/web/src/store/ingestApi.ts",
+    "rag-pipeline/apps/web/src/features/ingest/ChunkBrowser.tsx"
+  ],
+  "exports": {
+    "python": {
+      "src.ingest.chunker": {
+        "Chunk": {
+          "type": "dataclass",
+          "fields": {
+            "id": "str",
+            "document_id": "str",
+            "job_id": "str",
+            "chunk_index": "int",
+            "total_chunks": "int",
+            "content": "str",
+            "token_count": "int",
+            "heading_path": "str",
+            "metadata": "dict"
+          }
+        },
+        "MarkdownChunker": {
+          "type": "class",
+          "methods": {
+            "__init__": {
+              "signature": "def __init__(self, *, target_tokens: int = 512, max_tokens: int = 1024, overlap_tokens: int = 64, encoding_name: str = 'cl100k_base') -> None",
+              "description": "Initialize chunker with token budget parameters"
+            },
+            "count_tokens": {
+              "signature": "def count_tokens(self, text: str) -> int",
+              "description": "Return token count for a text string"
+            },
+            "chunk_document": {
+              "signature": "def chunk_document(self, *, markdown: str, document_id: str, job_id: str, metadata: dict | None = None) -> list[Chunk]",
+              "description": "Chunk a Markdown document into a list of Chunks"
+            }
+          }
+        }
+      },
+      "src.ingest.chunking_pipeline": {
+        "ChunkingPipeline": {
+          "type": "class",
+          "methods": {
+            "__init__": {
+              "signature": "def __init__(self, *, target_tokens: int = 512, max_tokens: int = 1024, overlap_tokens: int = 64) -> None",
+              "description": "Initialize pipeline with chunker config"
+            },
+            "chunk_document": {
+              "signature": "async def chunk_document(self, *, document_id: str, job_id: str, markdown_content: str, source_url: str, title: str, description: str, tags: list[str], fetched_at: str | None, approved_at: str | None, audit_rounds: int, quality_score: float, db: AsyncSession) -> list[ChunkDocument]",
+              "description": "Chunk a single document and persist"
+            },
+            "chunk_job": {
+              "signature": "async def chunk_job(self, *, job_id: str, approved_documents: list[dict], db: AsyncSession) -> ChunkStats",
+              "description": "Chunk all approved documents for a job"
+            }
+          }
+        }
+      },
+      "src.embeddings.fastembed_service": {
+        "MODEL_CONFIGS": {
+          "type": "dict[str, dict]",
+          "description": "Supported model configurations"
+        },
+        "ModelName": {
+          "type": "Literal",
+          "description": "Type alias for supported model names"
+        },
+        "FastEmbedService": {
+          "type": "class",
+          "methods": {
+            "__init__": {
+              "signature": "def __init__(self, model_name: ModelName = 'BAAI/bge-small-en-v1.5', *, cache_dir: str | None = None, threads: int | None = None) -> None",
+              "description": "Initialize with model name"
+            },
+            "embed_texts": {
+              "signature": "def embed_texts(self, texts: list[str]) -> list[np.ndarray]",
+              "description": "Embed a list of texts returning numpy arrays"
+            },
+            "embed_single": {
+              "signature": "def embed_single(self, text: str) -> np.ndarray",
+              "description": "Embed a single text string"
+            },
+            "embed_batched": {
+              "signature": "def embed_batched(self, texts: list[str], batch_size: int = 100) -> list[np.ndarray]",
+              "description": "Embed texts in batches for memory efficiency"
+            }
+          }
+        }
+      },
+      "src.embeddings.config": {
+        "EmbeddingConfig": {
+          "type": "dataclass",
+          "fields": {
+            "model_name": "str",
+            "dimensions": "int",
+            "batch_size": "int",
+            "cache_dir": "str | None",
+            "threads": "int | None"
+          }
+        }
+      },
+      "src.ingest.qdrant_ingest": {
+        "QdrantIngestService": {
+          "type": "class",
+          "methods": {
+            "__init__": {
+              "signature": "def __init__(self, *, qdrant_url: str = 'http://localhost:6333', embedding_config: EmbeddingConfig | None = None) -> None",
+              "description": "Initialize with Qdrant URL and embedding config"
+            },
+            "ensure_collection": {
+              "signature": "def ensure_collection(self, collection_name: str) -> None",
+              "description": "Create Qdrant collection if not exists (384d, cosine)"
+            },
+            "ingest_job": {
+              "signature": "async def ingest_job(self, *, job_id: str, collection_name: str, db: AsyncSession) -> AsyncGenerator[EmbedProgress, None]",
+              "description": "Embed and upsert all chunks, yielding progress"
+            },
+            "get_collection_stats": {
+              "signature": "def get_collection_stats(self, collection_name: str) -> dict",
+              "description": "Query Qdrant for live collection statistics"
+            },
+            "test_similarity_search": {
+              "signature": "def test_similarity_search(self, *, collection_name: str, query_text: str, limit: int = 5) -> list[dict]",
+              "description": "Run similarity search to verify ingestion"
+            }
+          }
+        }
+      },
+      "src.schemas.chunk": {
+        "ChunkMetadata": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "source_url": "str",
+            "title": "str",
+            "description": "str",
+            "tags": "list[str]",
+            "heading_path": "str",
+            "fetched_at": "datetime | None",
+            "approved_at": "datetime | None",
+            "audit_rounds": "int",
+            "quality_score": "float"
+          }
+        },
+        "ChunkDocument": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "id": "str",
+            "document_id": "str",
+            "job_id": "str",
+            "chunk_index": "int",
+            "total_chunks": "int",
+            "content": "str",
+            "token_count": "int",
+            "metadata": "ChunkMetadata"
+          }
+        },
+        "ChunkStats": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "job_id": "str",
+            "total_chunks": "int",
+            "avg_token_count": "float",
+            "min_token_count": "int",
+            "max_token_count": "int",
+            "total_tokens": "int",
+            "token_histogram": "list[int]"
+          }
+        },
+        "EmbedRequest": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "job_id": "str",
+            "collection_name": "str",
+            "model_name": "str"
+          }
+        },
+        "EmbedProgress": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "job_id": "str",
+            "phase": "str",
+            "current": "int",
+            "total": "int",
+            "message": "str"
+          }
+        }
+      },
+      "src.schemas.collection": {
+        "CollectionInfo": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "id": "str",
+            "job_id": "str",
+            "collection_name": "str",
+            "embedding_model": "str",
+            "vector_dimensions": "int",
+            "vector_count": "int",
+            "document_count": "int",
+            "status": "str",
+            "created_at": "datetime",
+            "updated_at": "datetime"
+          }
+        },
+        "CollectionStats": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "collection_name": "str",
+            "vector_count": "int",
+            "indexed_vectors": "int",
+            "points_count": "int",
+            "segments_count": "int",
+            "disk_data_size_bytes": "int",
+            "ram_data_size_bytes": "int",
+            "status": "str"
+          }
+        }
+      },
+      "src.models.chunk": {
+        "ChunkRecord": {
+          "type": "class",
+          "bases": ["Base", "UUIDMixin", "TimestampMixin"],
+          "fields": {
+            "document_id": "Mapped[uuid.UUID]",
+            "job_id": "Mapped[uuid.UUID]",
+            "chunk_index": "Mapped[int]",
+            "total_chunks": "Mapped[int]",
+            "content": "Mapped[str]",
+            "token_count": "Mapped[int]",
+            "heading_path": "Mapped[str]",
+            "metadata_json": "Mapped[dict]",
+            "embedding_status": "Mapped[str]"
+          }
+        }
+      },
+      "src.workers.ingest_tasks": {
+        "chunk_job_task": {
+          "type": "celery task",
+          "signature": "def chunk_job_task(self, job_id: str) -> dict"
+        },
+        "embed_job_task": {
+          "type": "celery task",
+          "signature": "def embed_job_task(self, job_id: str, collection_name: str) -> dict"
+        }
+      },
+      "src.routers.ingest": {
+        "router": {
+          "type": "APIRouter",
+          "description": "Ingestion API router (prefix=/ingest)"
+        }
+      }
+    },
+    "typescript": {
+      "src/store/ingestApi.ts": {
+        "ChunkMetadata": { "type": "interface" },
+        "ChunkDocument": { "type": "interface" },
+        "ChunkStats": { "type": "interface" },
+        "EmbedRequest": { "type": "interface" },
+        "CollectionInfo": { "type": "interface" },
+        "CollectionStats": { "type": "interface" },
+        "SearchResult": { "type": "interface" },
+        "ingestApi": { "type": "ReturnType<typeof createApi>" },
+        "useStartChunkingMutation": { "type": "hook" },
+        "useListChunksQuery": { "type": "hook" },
+        "useGetChunkQuery": { "type": "hook" },
+        "useGetChunkStatsQuery": { "type": "hook" },
+        "useStartEmbeddingMutation": { "type": "hook" },
+        "useListCollectionsQuery": { "type": "hook" },
+        "useGetCollectionStatsQuery": { "type": "hook" },
+        "useSimilaritySearchMutation": { "type": "hook" }
+      },
+      "src/features/ingest/ChunkBrowser.tsx": {
+        "ChunkBrowser": {
+          "type": "React.FC",
+          "props": { "jobId": "string" }
+        }
+      }
+    }
+  },
+  "database_tables": [
+    "chunks",
+    "vector_collections"
+  ],
+  "api_endpoints": [
+    { "method": "POST", "path": "/api/v1/ingest/jobs/{job_id}/chunk", "response": "dict" },
+    { "method": "GET", "path": "/api/v1/ingest/jobs/{job_id}/chunks", "response": "list[ChunkDocument]" },
+    { "method": "GET", "path": "/api/v1/ingest/jobs/{job_id}/chunks/{chunk_id}", "response": "ChunkDocument" },
+    { "method": "GET", "path": "/api/v1/ingest/jobs/{job_id}/chunk-stats", "response": "ChunkStats" },
+    { "method": "POST", "path": "/api/v1/ingest/jobs/{job_id}/embed", "response": "dict" },
+    { "method": "WS", "path": "/api/v1/ingest/jobs/{job_id}/embed/ws", "response": "EmbedProgress stream" },
+    { "method": "GET", "path": "/api/v1/ingest/collections", "response": "list[CollectionInfo]" },
+    { "method": "GET", "path": "/api/v1/ingest/collections/{name}/stats", "response": "CollectionStats" },
+    { "method": "POST", "path": "/api/v1/ingest/collections/{name}/search", "response": "list[SearchResult]" }
+  ],
+  "docker_services": []
+}

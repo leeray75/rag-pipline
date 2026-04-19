@@ -1,0 +1,4 @@
+packages:
+  - 'packages/*'
+
+# No additional configuration needed for basic workspace setup

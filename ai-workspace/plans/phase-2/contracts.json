@@ -1,0 +1,227 @@
+{
+  "phase": 2,
+  "title": "Phase 2 — URL Ingestion, Crawling & HTML→Markdown Conversion",
+  "dependencies": {
+    "python": {
+      "markitdown": ">=0.1.5",
+      "beautifulsoup4": ">=4.14.0",
+      "playwright": ">=1.58.0",
+      "trafilatura": ">=2.0.0",
+      "httpx": ">=0.28.0",
+      "langchain-anthropic": ">=0.4.0",
+      "langchain-core": ">=0.3.0"
+    },
+    "node": {
+      "@monaco-editor/react": "latest",
+      "react-split-pane": "latest",
+      "react-markdown": "latest",
+      "remark-gfm": "latest"
+    },
+    "infrastructure": {}
+  },
+  "files": [
+    "rag-pipeline/apps/api/src/crawlers/fetcher.py",
+    "rag-pipeline/apps/api/src/crawlers/link_discovery.py",
+    "rag-pipeline/apps/api/src/converters/markdown_converter.py",
+    "rag-pipeline/apps/api/src/workers/crawl_tasks.py",
+    "rag-pipeline/apps/api/src/routers/jobs.py",
+    "rag-pipeline/apps/api/src/routers/websocket.py",
+    "rag-pipeline/apps/api/tests/test_converter.py",
+    "rag-pipeline/apps/api/tests/test_link_discovery.py",
+    "rag-pipeline/apps/web/src/store/api/jobs-api.ts",
+    "rag-pipeline/apps/web/src/app/ingestion/page.tsx",
+    "rag-pipeline/apps/web/src/features/staging/staging-browser.tsx",
+    "rag-pipeline/apps/web/src/hooks/use-job-progress.ts"
+  ],
+  "exports": {
+    "python": {
+      "src.crawlers.fetcher": {
+        "FetchMode": {
+          "type": "class",
+          "bases": ["StrEnum"],
+          "fields": {
+            "STATIC": "\"static\"",
+            "BROWSER": "\"browser\""
+          }
+        },
+        "FetchResult": {
+          "type": "dataclass",
+          "fields": {
+            "url": "str",
+            "html": "str",
+            "status_code": "int",
+            "fetch_mode": "FetchMode",
+            "error": "str | None"
+          }
+        },
+        "fetch_static": {
+          "type": "async function",
+          "signature": "async def fetch_static(url: str, timeout: float = 30.0) -> FetchResult"
+        },
+        "fetch_with_browser": {
+          "type": "async function",
+          "signature": "async def fetch_with_browser(url: str, timeout: float = 60000) -> FetchResult"
+        },
+        "fetch_url": {
+          "type": "async function",
+          "signature": "async def fetch_url(url: str, use_browser: bool = False) -> FetchResult"
+        }
+      },
+      "src.crawlers.link_discovery": {
+        "DiscoveredLink": {
+          "type": "dataclass",
+          "fields": {
+            "href": "str",
+            "title": "str",
+            "source": "str"
+          }
+        },
+        "extract_links_with_selectors": {
+          "type": "function",
+          "signature": "def extract_links_with_selectors(html: str, base_url: str, nav_selectors: list[str] | None = None) -> list[DiscoveredLink]"
+        },
+        "extract_links_with_llm": {
+          "type": "async function",
+          "signature": "async def extract_links_with_llm(html: str, base_url: str) -> list[DiscoveredLink]"
+        },
+        "discover_doc_links": {
+          "type": "async function",
+          "signature": "async def discover_doc_links(html: str, base_url: str, min_links_threshold: int = 3) -> list[DiscoveredLink]"
+        }
+      },
+      "src.converters.markdown_converter": {
+        "ConversionResult": {
+          "type": "dataclass",
+          "fields": {
+            "markdown": "str",
+            "title": "str",
+            "word_count": "int",
+            "source_url": "str",
+            "error": "str | None"
+          }
+        },
+        "convert_html_to_markdown": {
+          "type": "function",
+          "signature": "def convert_html_to_markdown(html: str, source_url: str) -> ConversionResult"
+        }
+      },
+      "src.workers.crawl_tasks": {
+        "fetch_seed_url": {
+          "type": "celery task",
+          "signature": "def fetch_seed_url(self, job_id: str, url: str, use_browser: bool = False) -> dict"
+        },
+        "discover_links": {
+          "type": "celery task",
+          "signature": "def discover_links(self, seed_result: dict, crawl_all: bool = True) -> dict"
+        },
+        "fetch_and_convert_page": {
+          "type": "celery task",
+          "signature": "def fetch_and_convert_page(self, job_id: str, link: dict, doc_index: int) -> dict"
+        },
+        "finalize_crawl": {
+          "type": "celery task",
+          "signature": "def finalize_crawl(self, results: list[dict], job_id: str) -> dict"
+        },
+        "start_crawl_pipeline": {
+          "type": "function",
+          "signature": "def start_crawl_pipeline(job_id: str, url: str, crawl_all: bool = True) -> AsyncResult"
+        }
+      },
+      "src.routers.jobs": {
+        "router": {
+          "type": "APIRouter",
+          "description": "Jobs CRUD router"
+        },
+        "create_job": {
+          "type": "async function",
+          "signature": "async def create_job(payload: JobCreate, db: AsyncSession) -> JobResponse"
+        },
+        "get_job": {
+          "type": "async function",
+          "signature": "async def get_job(job_id: uuid.UUID, db: AsyncSession) -> JobResponse"
+        },
+        "get_job_status": {
+          "type": "async function",
+          "signature": "async def get_job_status(job_id: uuid.UUID, db: AsyncSession) -> JobStatusResponse"
+        },
+        "list_documents": {
+          "type": "async function",
+          "signature": "async def list_documents(job_id: uuid.UUID, db: AsyncSession) -> list[DocumentResponse]"
+        },
+        "get_document": {
+          "type": "async function",
+          "signature": "async def get_document(job_id: uuid.UUID, doc_id: uuid.UUID, db: AsyncSession) -> dict"
+        },
+        "delete_document": {
+          "type": "async function",
+          "signature": "async def delete_document(job_id: uuid.UUID, doc_id: uuid.UUID, db: AsyncSession) -> None"
+        }
+      },
+      "src.routers.websocket": {
+        "router": {
+          "type": "APIRouter",
+          "description": "WebSocket progress streaming router"
+        },
+        "ConnectionManager": {
+          "type": "class",
+          "methods": {
+            "connect": {
+              "signature": "async def connect(self, job_id: str, websocket: WebSocket) -> None",
+              "description": "Accept and register a WebSocket connection"
+            },
+            "disconnect": {
+              "signature": "def disconnect(self, job_id: str, websocket: WebSocket) -> None",
+              "description": "Remove a WebSocket connection"
+            },
+            "broadcast": {
+              "signature": "async def broadcast(self, job_id: str, message: dict) -> None",
+              "description": "Send message to all connections for a job"
+            }
+          }
+        },
+        "manager": {
+          "type": "ConnectionManager",
+          "description": "Singleton connection manager"
+        }
+      }
+    },
+    "typescript": {
+      "src/store/api/jobs-api.ts": {
+        "Job": { "type": "interface" },
+        "DocumentItem": { "type": "interface" },
+        "DocumentDetail": { "type": "interface" },
+        "jobsApi": { "type": "ReturnType<typeof apiSlice.injectEndpoints>" },
+        "useCreateJobMutation": { "type": "hook" },
+        "useGetJobQuery": { "type": "hook" },
+        "useGetJobStatusQuery": { "type": "hook" },
+        "useListDocumentsQuery": { "type": "hook" },
+        "useGetDocumentQuery": { "type": "hook" },
+        "useDeleteDocumentMutation": { "type": "hook" }
+      },
+      "src/hooks/use-job-progress.ts": {
+        "ProgressEvent": { "type": "interface" },
+        "useJobProgress": {
+          "type": "hook",
+          "signature": "(jobId: string | null) => { progress: ProgressEvent | null; isConnected: boolean }"
+        }
+      },
+      "src/features/staging/staging-browser.tsx": {
+        "StagingBrowser": {
+          "type": "React.FC",
+          "props": { "jobId": "string" }
+        }
+      }
+    }
+  },
+  "database_tables": [],
+  "api_endpoints": [
+    { "method": "POST", "path": "/api/v1/jobs", "response": "JobResponse" },
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}", "response": "JobResponse" },
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}/status", "response": "JobStatusResponse" },
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}/documents", "response": "list[DocumentResponse]" },
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}/documents/{doc_id}", "response": "dict" },
+    { "method": "DELETE", "path": "/api/v1/jobs/{job_id}/documents/{doc_id}", "response": "204" },
+    { "method": "WS", "path": "/api/v1/ws/jobs/{job_id}/stream", "response": "WebSocket" }
+  ],
+  "docker_services": []
+}

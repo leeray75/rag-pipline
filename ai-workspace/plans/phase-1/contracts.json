@@ -1,0 +1,356 @@
+{
+  "phase": 1,
+  "title": "Phase 1 — Foundation: Mono-Repo, Infrastructure & Core APIs",
+  "dependencies": {
+    "python": {
+      "fastapi[standard]": ">=0.135.0",
+      "uvicorn[standard]": ">=0.34.0",
+      "sqlalchemy[asyncio]": ">=2.0.49",
+      "alembic": ">=1.18.4",
+      "asyncpg": ">=0.30.0",
+      "pydantic": ">=2.13.0",
+      "pydantic-settings": ">=2.8.0",
+      "celery[redis]": ">=5.6.3",
+      "redis": ">=6.2.0",
+      "httpx": ">=0.28.0",
+      "websockets": ">=15.0",
+      "python-multipart": ">=0.0.20",
+      "structlog": ">=25.0.0"
+    },
+    "python_dev": {
+      "pytest": ">=8.0.0",
+      "pytest-asyncio": ">=0.25.0",
+      "ruff": ">=0.11.0",
+      "mypy": ">=1.15.0"
+    },
+    "node": {
+      "next": "latest",
+      "react": "^19.0.0",
+      "react-dom": "^19.0.0",
+      "@reduxjs/toolkit": "^2.11.0",
+      "react-redux": "^9.0.0",
+      "turbo": "^2.0.0"
+    },
+    "node_dev": {
+      "vitest": "^3.0.0",
+      "@testing-library/react": "latest",
+      "@testing-library/jest-dom": "latest",
+      "typescript": "^5.0.0"
+    },
+    "infrastructure": {
+      "postgres": "17",
+      "redis": "7-alpine",
+      "qdrant": "latest",
+      "traefik": "v3.4",
+      "node": "22-alpine",
+      "python": "3.13-slim"
+    }
+  },
+  "files": [
+    "rag-pipeline/package.json",
+    "rag-pipeline/pnpm-workspace.yaml",
+    "rag-pipeline/turbo.json",
+    "rag-pipeline/.gitignore",
+    "rag-pipeline/apps/api/pyproject.toml",
+    "rag-pipeline/apps/api/src/__init__.py",
+    "rag-pipeline/apps/api/src/main.py",
+    "rag-pipeline/apps/api/src/config.py",
+    "rag-pipeline/apps/api/src/database.py",
+    "rag-pipeline/apps/api/src/routers/__init__.py",
+    "rag-pipeline/apps/api/src/routers/health.py",
+    "rag-pipeline/apps/api/src/models/__init__.py",
+    "rag-pipeline/apps/api/src/models/base.py",
+    "rag-pipeline/apps/api/src/models/ingestion_job.py",
+    "rag-pipeline/apps/api/src/models/document.py",
+    "rag-pipeline/apps/api/src/models/audit_report.py",
+    "rag-pipeline/apps/api/src/models/vector_collection.py",
+    "rag-pipeline/apps/api/src/schemas/__init__.py",
+    "rag-pipeline/apps/api/src/schemas/job.py",
+    "rag-pipeline/apps/api/src/schemas/document.py",
+    "rag-pipeline/apps/api/src/agents/__init__.py",
+    "rag-pipeline/apps/api/src/crawlers/__init__.py",
+    "rag-pipeline/apps/api/src/converters/__init__.py",
+    "rag-pipeline/apps/api/src/embeddings/__init__.py",
+    "rag-pipeline/apps/api/src/ingest/__init__.py",
+    "rag-pipeline/apps/api/src/mcp/__init__.py",
+    "rag-pipeline/apps/api/src/workers/__init__.py",
+    "rag-pipeline/apps/api/src/workers/celery_app.py",
+    "rag-pipeline/apps/api/tests/__init__.py",
+    "rag-pipeline/apps/api/tests/conftest.py",
+    "rag-pipeline/apps/api/tests/test_health.py",
+    "rag-pipeline/apps/api/alembic.ini",
+    "rag-pipeline/apps/api/alembic/env.py",
+    "rag-pipeline/apps/api/Dockerfile",
+    "rag-pipeline/apps/web/package.json",
+    "rag-pipeline/apps/web/tsconfig.json",
+    "rag-pipeline/apps/web/next.config.js",
+    "rag-pipeline/apps/web/src/app/layout.tsx",
+    "rag-pipeline/apps/web/src/app/page.tsx",
+    "rag-pipeline/apps/web/src/store/store.ts",
+    "rag-pipeline/apps/web/src/store/hooks.ts",
+    "rag-pipeline/apps/web/src/store/provider.tsx",
+    "rag-pipeline/apps/web/src/store/api/api-slice.ts",
+    "rag-pipeline/apps/web/.env.local",
+    "rag-pipeline/apps/web/Dockerfile",
+    "rag-pipeline/infra/docker-compose.yml",
+    "rag-pipeline/infra/docker-compose.dev.yml",
+    "rag-pipeline/.github/workflows/ci.yml"
+  ],
+  "exports": {
+    "python": {
+      "src.main": {
+        "app": {
+          "type": "FastAPI",
+          "description": "Main FastAPI application instance"
+        },
+        "lifespan": {
+          "type": "async function",
+          "signature": "async def lifespan(app: FastAPI) -> AsyncGenerator[None]"
+        }
+      },
+      "src.config": {
+        "Settings": {
+          "type": "class",
+          "bases": ["BaseSettings"],
+          "fields": {
+            "database_url": "str",
+            "redis_url": "str",
+            "qdrant_host": "str",
+            "qdrant_port": "int",
+            "cors_origins": "list[str]",
+            "celery_broker_url": "str",
+            "celery_result_backend": "str"
+          },
+          "methods": {}
+        },
+        "settings": {
+          "type": "Settings",
+          "description": "Singleton settings instance"
+        }
+      },
+      "src.database": {
+        "engine": {
+          "type": "AsyncEngine",
+          "description": "SQLAlchemy async engine"
+        },
+        "async_session_factory": {
+          "type": "async_sessionmaker[AsyncSession]",
+          "description": "Session factory for dependency injection"
+        },
+        "get_db": {
+          "type": "async function",
+          "signature": "async def get_db() -> AsyncSession"
+        }
+      },
+      "src.routers.health": {
+        "router": {
+          "type": "APIRouter",
+          "description": "Health check router"
+        },
+        "health_check": {
+          "type": "async function",
+          "signature": "async def health_check() -> dict"
+        }
+      },
+      "src.models.base": {
+        "Base": {
+          "type": "class",
+          "bases": ["DeclarativeBase"],
+          "description": "SQLAlchemy declarative base"
+        },
+        "TimestampMixin": {
+          "type": "class",
+          "fields": {
+            "created_at": "Mapped[datetime]",
+            "updated_at": "Mapped[datetime]"
+          }
+        },
+        "UUIDMixin": {
+          "type": "class",
+          "fields": {
+            "id": "Mapped[uuid.UUID]"
+          }
+        }
+      },
+      "src.models.ingestion_job": {
+        "JobStatus": {
+          "type": "class",
+          "bases": ["StrEnum"],
+          "fields": {
+            "PENDING": "\"pending\"",
+            "CRAWLING": "\"crawling\"",
+            "CONVERTING": "\"converting\"",
+            "AUDITING": "\"auditing\"",
+            "CORRECTING": "\"correcting\"",
+            "REVIEW": "\"review\"",
+            "APPROVED": "\"approved\"",
+            "GENERATING_JSON": "\"generating_json\"",
+            "EMBEDDING": "\"embedding\"",
+            "INGESTED": "\"ingested\"",
+            "FAILED": "\"failed\""
+          }
+        },
+        "IngestionJob": {
+          "type": "class",
+          "bases": ["Base", "UUIDMixin", "TimestampMixin"],
+          "fields": {
+            "url": "Mapped[str]",
+            "status": "Mapped[str]",
+            "crawl_all_docs": "Mapped[bool]",
+            "total_documents": "Mapped[int]",
+            "processed_documents": "Mapped[int]",
+            "current_audit_round": "Mapped[int]"
+          }
+        }
+      },
+      "src.models.document": {
+        "Document": {
+          "type": "class",
+          "bases": ["Base", "UUIDMixin", "TimestampMixin"],
+          "fields": {
+            "job_id": "Mapped[uuid.UUID]",
+            "url": "Mapped[str]",
+            "title": "Mapped[str | None]",
+            "raw_html_path": "Mapped[str | None]",
+            "markdown_path": "Mapped[str | None]",
+            "status": "Mapped[str]",
+            "word_count": "Mapped[int | None]",
+            "quality_score": "Mapped[int | None]"
+          }
+        }
+      },
+      "src.models.audit_report": {
+        "AuditReport": {
+          "type": "class",
+          "bases": ["Base", "UUIDMixin", "TimestampMixin"],
+          "fields": {
+            "job_id": "Mapped[uuid.UUID]",
+            "round": "Mapped[int]",
+            "total_issues": "Mapped[int]",
+            "issues_json": "Mapped[dict | None]",
+            "summary": "Mapped[str | None]",
+            "status": "Mapped[str]",
+            "agent_notes": "Mapped[str | None]"
+          }
+        }
+      },
+      "src.models.vector_collection": {
+        "VectorCollection": {
+          "type": "class",
+          "bases": ["Base", "UUIDMixin", "TimestampMixin"],
+          "fields": {
+            "job_id": "Mapped[uuid.UUID]",
+            "qdrant_collection_name": "Mapped[str]",
+            "document_count": "Mapped[int]",
+            "chunk_count": "Mapped[int]",
+            "vector_dimensions": "Mapped[int]",
+            "embedded_at": "Mapped[datetime | None]"
+          }
+        }
+      },
+      "src.schemas.job": {
+        "JobCreate": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "url": "HttpUrl",
+            "crawl_all_docs": "bool"
+          }
+        },
+        "JobResponse": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "id": "uuid.UUID",
+            "url": "str",
+            "status": "str",
+            "crawl_all_docs": "bool",
+            "total_documents": "int",
+            "processed_documents": "int",
+            "current_audit_round": "int",
+            "created_at": "datetime",
+            "updated_at": "datetime"
+          }
+        },
+        "JobStatusResponse": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "id": "uuid.UUID",
+            "status": "str",
+            "total_documents": "int",
+            "processed_documents": "int",
+            "current_audit_round": "int"
+          }
+        }
+      },
+      "src.schemas.document": {
+        "DocumentResponse": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "id": "uuid.UUID",
+            "job_id": "uuid.UUID",
+            "url": "str",
+            "title": "str | None",
+            "status": "str",
+            "word_count": "int | None",
+            "quality_score": "int | None",
+            "created_at": "datetime"
+          }
+        }
+      },
+      "src.workers.celery_app": {
+        "celery_app": {
+          "type": "Celery",
+          "description": "Celery application instance"
+        }
+      }
+    },
+    "typescript": {
+      "src/store/store.ts": {
+        "store": { "type": "ReturnType<typeof configureStore>" },
+        "RootState": { "type": "ReturnType<typeof store.getState>" },
+        "AppDispatch": { "type": "typeof store.dispatch" }
+      },
+      "src/store/hooks.ts": {
+        "useAppDispatch": { "type": "TypedUseSelectorHook<AppDispatch>" },
+        "useAppSelector": { "type": "TypedUseSelectorHook<RootState>" }
+      },
+      "src/store/provider.tsx": {
+        "StoreProvider": {
+          "type": "React.FC",
+          "props": { "children": "React.ReactNode" }
+        }
+      },
+      "src/store/api/api-slice.ts": {
+        "apiSlice": {
+          "type": "ReturnType<typeof createApi>",
+          "props": {
+            "reducerPath": "\"api\"",
+            "baseQuery": "fetchBaseQuery({ baseUrl: '/api/v1' })",
+            "tagTypes": "[\"Jobs\", \"Documents\", \"AuditReports\"]"
+          }
+        }
+      }
+    }
+  },
+  "database_tables": [
+    "ingestion_jobs",
+    "documents",
+    "audit_reports",
+    "vector_collections"
+  ],
+  "api_endpoints": [
+    { "method": "GET", "path": "/api/v1/health", "response": "dict" }
+  ],
+  "docker_services": [
+    "traefik",
+    "api",
+    "web",
+    "celery-worker",
+    "postgres",
+    "redis",
+    "qdrant"
+  ]
+}

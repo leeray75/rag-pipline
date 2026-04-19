@@ -1,0 +1,157 @@
+{
+  "phase": 3,
+  "title": "Phase 3 — Audit Agent: Schema Validation & Report Generation",
+  "dependencies": {
+    "python": {
+      "langgraph": ">=1.1.0",
+      "langchain": ">=1.2.0",
+      "langchain-anthropic": ">=0.4.0",
+      "langchain-openai": ">=0.3.0",
+      "pydantic-ai": ">=0.1.0",
+      "numpy": ">=2.0.0"
+    },
+    "node": {},
+    "infrastructure": {}
+  },
+  "files": [
+    "rag-pipeline/apps/api/src/agents/schema_validator.py",
+    "rag-pipeline/apps/api/src/agents/audit_state.py",
+    "rag-pipeline/apps/api/src/agents/audit_agent.py",
+    "rag-pipeline/apps/api/src/routers/audit.py",
+    "rag-pipeline/apps/api/tests/test_schema_validator.py",
+    "rag-pipeline/apps/web/src/store/api/audit-api.ts",
+    "rag-pipeline/apps/web/src/app/audit/[jobId]/page.tsx"
+  ],
+  "exports": {
+    "python": {
+      "src.agents.schema_validator": {
+        "SchemaIssue": {
+          "type": "dataclass",
+          "fields": {
+            "issue_id": "str",
+            "issue_type": "str",
+            "severity": "str",
+            "field": "str | None",
+            "message": "str",
+            "line": "int | None",
+            "suggestion": "str | None"
+          }
+        },
+        "SchemaValidationResult": {
+          "type": "dataclass",
+          "fields": {
+            "doc_path": "str",
+            "issues": "list[SchemaIssue]",
+            "is_valid": "bool"
+          }
+        },
+        "validate_document": {
+          "type": "function",
+          "signature": "def validate_document(content: str, doc_path: str) -> SchemaValidationResult"
+        }
+      },
+      "src.agents.audit_state": {
+        "AuditDocInfo": {
+          "type": "TypedDict",
+          "fields": {
+            "doc_id": "str",
+            "doc_path": "str",
+            "url": "str",
+            "title": "str",
+            "content": "str",
+            "issues": "list[dict]",
+            "quality_score": "int",
+            "status": "str"
+          }
+        },
+        "AuditState": {
+          "type": "TypedDict",
+          "fields": {
+            "job_id": "str",
+            "round": "int",
+            "documents": "list[AuditDocInfo]",
+            "total_issues": "int",
+            "summary": "str",
+            "report_id": "str",
+            "status": "str"
+          }
+        }
+      },
+      "src.agents.audit_agent": {
+        "load_documents": {
+          "type": "function",
+          "signature": "def load_documents(state: AuditState) -> dict"
+        },
+        "validate_schema": {
+          "type": "function",
+          "signature": "def validate_schema(state: AuditState) -> dict"
+        },
+        "assess_quality": {
+          "type": "async function",
+          "signature": "async def assess_quality(state: AuditState) -> dict"
+        },
+        "check_duplicates": {
+          "type": "function",
+          "signature": "def check_duplicates(state: AuditState) -> dict"
+        },
+        "compile_report": {
+          "type": "function",
+          "signature": "def compile_report(state: AuditState) -> dict"
+        },
+        "save_report": {
+          "type": "function",
+          "signature": "def save_report(state: AuditState) -> dict"
+        },
+        "should_approve": {
+          "type": "function",
+          "signature": "def should_approve(state: AuditState) -> str"
+        },
+        "build_audit_graph": {
+          "type": "function",
+          "signature": "def build_audit_graph() -> StateGraph"
+        },
+        "run_audit": {
+          "type": "async function",
+          "signature": "async def run_audit(job_id: str, audit_round: int = 1) -> dict"
+        }
+      },
+      "src.routers.audit": {
+        "router": {
+          "type": "APIRouter",
+          "description": "Audit report router"
+        },
+        "trigger_audit": {
+          "type": "async function",
+          "signature": "async def trigger_audit(job_id: uuid.UUID, db: AsyncSession) -> dict"
+        },
+        "list_audit_reports": {
+          "type": "async function",
+          "signature": "async def list_audit_reports(job_id: uuid.UUID, db: AsyncSession) -> list[dict]"
+        },
+        "get_audit_report": {
+          "type": "async function",
+          "signature": "async def get_audit_report(job_id: uuid.UUID, report_id: uuid.UUID, db: AsyncSession) -> dict"
+        }
+      }
+    },
+    "typescript": {
+      "src/store/api/audit-api.ts": {
+        "AuditReportSummary": { "type": "interface" },
+        "AuditIssue": { "type": "interface" },
+        "AuditDocResult": { "type": "interface" },
+        "AuditReportDetail": { "type": "interface" },
+        "auditApi": { "type": "ReturnType<typeof apiSlice.injectEndpoints>" },
+        "useTriggerAuditMutation": { "type": "hook" },
+        "useListAuditReportsQuery": { "type": "hook" },
+        "useGetAuditReportQuery": { "type": "hook" }
+      }
+    }
+  },
+  "database_tables": [],
+  "api_endpoints": [
+    { "method": "POST", "path": "/api/v1/jobs/{job_id}/audit", "response": "dict (202)" },
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}/audit-reports", "response": "list[dict]" },
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}/audit-reports/{report_id}", "response": "dict" }
+  ],
+  "docker_services": []
+}

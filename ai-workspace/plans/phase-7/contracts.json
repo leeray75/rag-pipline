@@ -1,0 +1,214 @@
+{
+  "phase": 7,
+  "title": "Phase 7 — MCP Server, Observability, Polish & Production Hardening",
+  "dependencies": {
+    "python": {
+      "mcp": ">=1.27.0,<2.0.0",
+      "opentelemetry-api": ">=1.33.0,<2.0.0",
+      "opentelemetry-sdk": ">=1.33.0,<2.0.0",
+      "opentelemetry-instrumentation-fastapi": ">=0.54b0",
+      "opentelemetry-instrumentation-celery": ">=0.54b0",
+      "opentelemetry-instrumentation-httpx": ">=0.54b0",
+      "opentelemetry-exporter-otlp": ">=1.33.0,<2.0.0",
+      "prometheus-fastapi-instrumentator": ">=7.1.0,<8.0.0",
+      "python-jose[cryptography]": ">=3.4.0,<4.0.0",
+      "slowapi": ">=0.1.9,<1.0.0",
+      "structlog": ">=25.4.0,<26.0.0",
+      "langsmith": ">=0.3.42,<1.0.0",
+      "sentry-sdk[fastapi]": ">=2.29.1,<3.0.0"
+    },
+    "node": {},
+    "infrastructure": {
+      "grafana": "grafana/grafana:11.6",
+      "tempo": "grafana/tempo:2.7",
+      "prometheus": "prom/prometheus:3.4",
+      "loki": "grafana/loki:3.5"
+    }
+  },
+  "files": [
+    "rag-pipeline/apps/api/src/mcp/server.py",
+    "rag-pipeline/apps/api/src/mcp/tool_handlers.py",
+    "rag-pipeline/apps/api/src/mcp/sse_transport.py",
+    "rag-pipeline/apps/api/src/mcp/__main__.py",
+    "rag-pipeline/apps/api/src/auth/__init__.py",
+    "rag-pipeline/apps/api/src/auth/jwt_handler.py",
+    "rag-pipeline/apps/api/src/auth/dependencies.py",
+    "rag-pipeline/apps/api/src/security/__init__.py",
+    "rag-pipeline/apps/api/src/security/ssrf_prevention.py",
+    "rag-pipeline/apps/api/src/security/rate_limiter.py",
+    "rag-pipeline/apps/api/src/observability/__init__.py",
+    "rag-pipeline/apps/api/src/observability/tracing.py",
+    "rag-pipeline/apps/api/src/observability/metrics.py",
+    "rag-pipeline/apps/api/src/observability/logging_config.py",
+    "rag-pipeline/apps/api/src/observability/sentry_init.py",
+    "rag-pipeline/infra/docker-compose.prod.yml",
+    "rag-pipeline/infra/prometheus/prometheus.yml",
+    "rag-pipeline/infra/tempo/tempo.yaml",
+    "rag-pipeline/infra/grafana/provisioning/datasources/datasources.yml",
+    "rag-pipeline/infra/grafana/provisioning/dashboards/dashboards.yml",
+    "rag-pipeline/docs/README.md",
+    "rag-pipeline/docs/MCP_TOOLS.md",
+    "rag-pipeline/docs/API_REFERENCE.md",
+    "rag-pipeline/docs/DEPLOYMENT.md"
+  ],
+  "exports": {
+    "python": {
+      "src.mcp.server": {
+        "mcp": {
+          "type": "Server",
+          "description": "MCP server instance ('rag-pipeline')"
+        },
+        "list_tools": {
+          "type": "async function",
+          "signature": "async def list_tools() -> list[Tool]",
+          "description": "Returns 7 MCP tools: ingest_url, get_job_status, list_documents, get_audit_report, search_knowledge_base, approve_job, get_collection_stats"
+        }
+      },
+      "src.mcp.tool_handlers": {
+        "call_tool": {
+          "type": "async function",
+          "signature": "async def call_tool(name: str, arguments: dict) -> list[TextContent]",
+          "description": "Routes MCP tool calls to handler functions"
+        }
+      },
+      "src.mcp.sse_transport": {
+        "router": {
+          "type": "APIRouter",
+          "description": "MCP SSE transport router (prefix=/mcp)"
+        },
+        "sse_transport": {
+          "type": "SseServerTransport",
+          "description": "SSE transport instance"
+        },
+        "mcp_sse_endpoint": {
+          "type": "async function",
+          "signature": "async def mcp_sse_endpoint(request: Request) -> StreamingResponse"
+        },
+        "mcp_messages_endpoint": {
+          "type": "async function",
+          "signature": "async def mcp_messages_endpoint(request: Request) -> None"
+        }
+      },
+      "src.auth.jwt_handler": {
+        "create_access_token": {
+          "type": "function",
+          "signature": "def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str"
+        },
+        "verify_token": {
+          "type": "function",
+          "signature": "def verify_token(token: str) -> dict"
+        }
+      },
+      "src.auth.dependencies": {
+        "get_current_user": {
+          "type": "async function",
+          "signature": "async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict"
+        }
+      },
+      "src.security.ssrf_prevention": {
+        "validate_url": {
+          "type": "function",
+          "signature": "def validate_url(url: str) -> bool",
+          "description": "Validates URL is not targeting internal/private networks"
+        },
+        "safe_fetch": {
+          "type": "async function",
+          "signature": "async def safe_fetch(url: str) -> httpx.Response",
+          "description": "Fetch URL with SSRF prevention checks"
+        }
+      },
+      "src.security.rate_limiter": {
+        "limiter": {
+          "type": "Limiter",
+          "description": "slowapi rate limiter instance"
+        }
+      },
+      "src.observability.tracing": {
+        "init_tracing": {
+          "type": "function",
+          "signature": "def init_tracing(app: FastAPI) -> None",
+          "description": "Initialize OpenTelemetry tracing with Tempo exporter"
+        }
+      },
+      "src.observability.metrics": {
+        "init_metrics": {
+          "type": "function",
+          "signature": "def init_metrics(app: FastAPI) -> None",
+          "description": "Initialize Prometheus metrics instrumentation"
+        }
+      },
+      "src.observability.logging_config": {
+        "configure_logging": {
+          "type": "function",
+          "signature": "def configure_logging() -> None",
+          "description": "Configure structlog with JSON output for Loki"
+        }
+      },
+      "src.observability.sentry_init": {
+        "init_sentry": {
+          "type": "function",
+          "signature": "def init_sentry(dsn: str | None = None) -> None",
+          "description": "Initialize Sentry error tracking"
+        }
+      }
+    },
+    "typescript": {}
+  },
+  "database_tables": [],
+  "api_endpoints": [
+    { "method": "GET", "path": "/mcp/sse", "response": "SSE stream (MCP protocol)" },
+    { "method": "POST", "path": "/mcp/messages/", "response": "MCP message response" },
+    { "method": "POST", "path": "/api/v1/auth/token", "response": "JWT access token" },
+    { "method": "GET", "path": "/metrics", "response": "Prometheus metrics" }
+  ],
+  "mcp_tools": [
+    {
+      "name": "ingest_url",
+      "description": "Create an ingestion job from a URL",
+      "input": { "url": "string (required)", "crawl_all": "boolean (default: false)" },
+      "output": "{ job_id, url, status }"
+    },
+    {
+      "name": "get_job_status",
+      "description": "Get current status and progress for a job",
+      "input": { "job_id": "string (required)" },
+      "output": "{ job_id, status, progress, audit_rounds }"
+    },
+    {
+      "name": "list_documents",
+      "description": "List all documents for a job with status",
+      "input": { "job_id": "string (required)" },
+      "output": "{ job_id, total, documents[] }"
+    },
+    {
+      "name": "get_audit_report",
+      "description": "Get structured audit report for a round",
+      "input": { "job_id": "string (required)", "round": "integer (default: 1)" },
+      "output": "{ job_id, round, report }"
+    },
+    {
+      "name": "search_knowledge_base",
+      "description": "Query Qdrant and return ranked chunks",
+      "input": { "query": "string (required)", "collection_name": "string (required)", "top_k": "integer (default: 5)" },
+      "output": "{ query, collection, results[] }"
+    },
+    {
+      "name": "approve_job",
+      "description": "Approve job and start chunking pipeline",
+      "input": { "job_id": "string (required)" },
+      "output": "{ job_id, task_id, status }"
+    },
+    {
+      "name": "get_collection_stats",
+      "description": "Get Qdrant collection metadata and statistics",
+      "input": { "collection_name": "string (required)" },
+      "output": "{ collection_name, vector_count, status, ... }"
+    }
+  ],
+  "docker_services": [
+    "grafana",
+    "tempo",
+    "prometheus",
+    "loki"
+  ]
+}

@@ -1,0 +1,25 @@
+services:
+  api:
+    build:
+      context: ../apps/api
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ../apps/api/src:/app/src:cached
+      - staging-data:/app/data/staging
+    environment:
+      - RAG_DATABASE_URL=postgresql+asyncpg://rag_user:rag_pass@postgres:5432/rag_pipeline
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+    command: pnpm dev
+    volumes:
+      - ../apps/web/src:/app/src:cached
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost/api/v1
+
+  celery-worker:
+    command: celery -A src.workers.celery_app worker --loglevel=debug --concurrency=2
+    volumes:
+      - ../apps/api/src:/app/src:cached

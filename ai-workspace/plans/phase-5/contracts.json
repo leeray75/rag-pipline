@@ -1,0 +1,185 @@
+{
+  "phase": 5,
+  "title": "Phase 5 — Human Review Interface & Approval Workflow",
+  "dependencies": {
+    "python": {},
+    "node": {
+      "@monaco-editor/react": "latest",
+      "diff": "latest",
+      "react-diff-viewer-continued": "latest",
+      "@types/diff": "latest"
+    },
+    "infrastructure": {}
+  },
+  "files": [
+    "rag-pipeline/apps/api/src/models/review.py",
+    "rag-pipeline/apps/api/src/schemas/review.py",
+    "rag-pipeline/apps/api/src/routers/review.py",
+    "rag-pipeline/apps/api/tests/test_review_api.py",
+    "rag-pipeline/apps/web/src/store/api/review-api.ts",
+    "rag-pipeline/apps/web/src/app/review/[jobId]/page.tsx",
+    "rag-pipeline/apps/web/src/app/review/[jobId]/[docId]/page.tsx"
+  ],
+  "exports": {
+    "python": {
+      "src.models.review": {
+        "ReviewDecision": {
+          "type": "class",
+          "bases": ["Base", "UUIDMixin", "TimestampMixin"],
+          "fields": {
+            "document_id": "Mapped[uuid.UUID]",
+            "job_id": "Mapped[uuid.UUID]",
+            "decision": "Mapped[str]",
+            "reviewer_notes": "Mapped[str | None]",
+            "edited_content": "Mapped[str | None]"
+          }
+        },
+        "ReviewComment": {
+          "type": "class",
+          "bases": ["Base", "UUIDMixin", "TimestampMixin"],
+          "fields": {
+            "document_id": "Mapped[uuid.UUID]",
+            "line_number": "Mapped[int | None]",
+            "content": "Mapped[str]",
+            "author": "Mapped[str]",
+            "resolved": "Mapped[bool]"
+          }
+        }
+      },
+      "src.schemas.review": {
+        "ReviewDecisionCreate": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "decision": "str",
+            "reviewer_notes": "str | None",
+            "edited_content": "str | None"
+          }
+        },
+        "ReviewDecisionResponse": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "id": "uuid.UUID",
+            "document_id": "uuid.UUID",
+            "job_id": "uuid.UUID",
+            "decision": "str",
+            "reviewer_notes": "str | None",
+            "created_at": "datetime"
+          }
+        },
+        "ReviewCommentCreate": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "line_number": "int | None",
+            "content": "str"
+          }
+        },
+        "ReviewCommentResponse": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "id": "uuid.UUID",
+            "document_id": "uuid.UUID",
+            "line_number": "int | None",
+            "content": "str",
+            "author": "str",
+            "resolved": "bool",
+            "created_at": "datetime"
+          }
+        },
+        "BatchApproveRequest": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "document_ids": "list[uuid.UUID]",
+            "reviewer_notes": "str | None"
+          }
+        },
+        "ReviewSummary": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "total_documents": "int",
+            "approved": "int",
+            "rejected": "int",
+            "edited": "int",
+            "pending": "int",
+            "all_reviewed": "bool"
+          }
+        }
+      },
+      "src.routers.review": {
+        "router": {
+          "type": "APIRouter",
+          "description": "Human review workflow router"
+        },
+        "get_review_summary": {
+          "type": "async function",
+          "signature": "async def get_review_summary(job_id: uuid.UUID, db: AsyncSession) -> ReviewSummary"
+        },
+        "list_review_documents": {
+          "type": "async function",
+          "signature": "async def list_review_documents(job_id: uuid.UUID, status: str | None, db: AsyncSession) -> list[dict]"
+        },
+        "get_review_document": {
+          "type": "async function",
+          "signature": "async def get_review_document(job_id: uuid.UUID, doc_id: uuid.UUID, db: AsyncSession) -> dict"
+        },
+        "submit_review_decision": {
+          "type": "async function",
+          "signature": "async def submit_review_decision(job_id: uuid.UUID, doc_id: uuid.UUID, payload: ReviewDecisionCreate, db: AsyncSession) -> dict"
+        },
+        "batch_approve": {
+          "type": "async function",
+          "signature": "async def batch_approve(job_id: uuid.UUID, payload: BatchApproveRequest, db: AsyncSession) -> dict"
+        },
+        "finalize_review": {
+          "type": "async function",
+          "signature": "async def finalize_review(job_id: uuid.UUID, db: AsyncSession) -> dict"
+        },
+        "add_comment": {
+          "type": "async function",
+          "signature": "async def add_comment(job_id: uuid.UUID, doc_id: uuid.UUID, payload: ReviewCommentCreate, db: AsyncSession) -> dict"
+        },
+        "resolve_comment": {
+          "type": "async function",
+          "signature": "async def resolve_comment(job_id: uuid.UUID, comment_id: uuid.UUID, db: AsyncSession) -> dict"
+        }
+      }
+    },
+    "typescript": {
+      "src/store/api/review-api.ts": {
+        "ReviewDocument": { "type": "interface" },
+        "ReviewDocDetail": { "type": "interface" },
+        "ReviewCommentItem": { "type": "interface" },
+        "ReviewSummary": { "type": "interface" },
+        "reviewApi": { "type": "ReturnType<typeof apiSlice.injectEndpoints>" },
+        "useGetReviewSummaryQuery": { "type": "hook" },
+        "useListReviewDocumentsQuery": { "type": "hook" },
+        "useGetReviewDocumentQuery": { "type": "hook" },
+        "useSubmitDecisionMutation": { "type": "hook" },
+        "useBatchApproveMutation": { "type": "hook" },
+        "useFinalizeReviewMutation": { "type": "hook" },
+        "useAddCommentMutation": { "type": "hook" },
+        "useResolveCommentMutation": { "type": "hook" }
+      }
+    }
+  },
+  "database_tables": [
+    "review_decisions",
+    "review_comments"
+  ],
+  "api_endpoints": [
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}/review/summary", "response": "ReviewSummary" },
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}/review/documents", "response": "list[dict]" },
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}/review/documents/{doc_id}", "response": "dict" },
+    { "method": "POST", "path": "/api/v1/jobs/{job_id}/review/documents/{doc_id}/decide", "response": "dict" },
+    { "method": "POST", "path": "/api/v1/jobs/{job_id}/review/batch-approve", "response": "dict" },
+    { "method": "POST", "path": "/api/v1/jobs/{job_id}/review/finalize", "response": "dict" },
+    { "method": "POST", "path": "/api/v1/jobs/{job_id}/review/documents/{doc_id}/comments", "response": "dict" },
+    { "method": "PATCH", "path": "/api/v1/jobs/{job_id}/review/comments/{comment_id}/resolve", "response": "dict" }
+  ],
+  "docker_services": []
+}

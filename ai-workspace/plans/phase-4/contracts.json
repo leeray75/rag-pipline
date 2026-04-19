@@ -1,0 +1,202 @@
+{
+  "phase": 4,
+  "title": "Phase 4 — Correction Agent & Iterative Audit Loop (A2A)",
+  "dependencies": {
+    "python": {},
+    "node": {},
+    "infrastructure": {}
+  },
+  "files": [
+    "rag-pipeline/apps/api/src/agents/a2a_messages.py",
+    "rag-pipeline/apps/api/src/agents/correction_state.py",
+    "rag-pipeline/apps/api/src/agents/correction_agent.py",
+    "rag-pipeline/apps/api/src/agents/loop_orchestrator.py",
+    "rag-pipeline/apps/api/src/routers/loop.py",
+    "rag-pipeline/apps/api/tests/test_a2a_messages.py",
+    "rag-pipeline/apps/web/src/store/api/loop-api.ts",
+    "rag-pipeline/apps/web/src/app/loop/[jobId]/page.tsx"
+  ],
+  "exports": {
+    "python": {
+      "src.agents.a2a_messages": {
+        "A2AAction": {
+          "type": "class",
+          "bases": ["StrEnum"],
+          "fields": {
+            "AUDIT_COMPLETE": "\"AUDIT_COMPLETE\"",
+            "CORRECTION_STARTED": "\"CORRECTION_STARTED\"",
+            "ISSUE_CLASSIFIED": "\"ISSUE_CLASSIFIED\"",
+            "DOCUMENT_CORRECTED": "\"DOCUMENT_CORRECTED\"",
+            "CORRECTION_COMPLETE": "\"CORRECTION_COMPLETE\"",
+            "RE_AUDIT_REQUESTED": "\"RE_AUDIT_REQUESTED\"",
+            "LOOP_APPROVED": "\"LOOP_APPROVED\"",
+            "LOOP_ESCALATED": "\"LOOP_ESCALATED\""
+          }
+        },
+        "A2AMessage": {
+          "type": "class",
+          "bases": ["BaseModel"],
+          "fields": {
+            "message_id": "str",
+            "timestamp": "str",
+            "sender": "str",
+            "recipient": "str",
+            "action": "A2AAction",
+            "job_id": "str",
+            "round": "int",
+            "payload": "dict[str, Any]"
+          }
+        },
+        "A2AMessageBus": {
+          "type": "class",
+          "methods": {
+            "publish": {
+              "signature": "def publish(self, message: A2AMessage) -> None",
+              "description": "Publish a message to the bus"
+            },
+            "subscribe": {
+              "signature": "def subscribe(self, action: A2AAction, handler) -> None",
+              "description": "Subscribe a handler to an action type"
+            },
+            "get_messages": {
+              "signature": "def get_messages(self, job_id: str, action: A2AAction | None = None) -> list[A2AMessage]",
+              "description": "Retrieve messages for a job"
+            },
+            "get_all_messages": {
+              "signature": "def get_all_messages(self, job_id: str) -> list[A2AMessage]",
+              "description": "Get all messages for a job ordered by timestamp"
+            }
+          }
+        },
+        "message_bus": {
+          "type": "A2AMessageBus",
+          "description": "Singleton message bus instance"
+        }
+      },
+      "src.agents.correction_state": {
+        "CorrectionIssue": {
+          "type": "TypedDict",
+          "fields": {
+            "issue_id": "str",
+            "issue_type": "str",
+            "severity": "str",
+            "field": "str | None",
+            "message": "str",
+            "line": "int | None",
+            "suggestion": "str | None",
+            "classification": "str",
+            "reasoning": "str",
+            "correction": "str"
+          }
+        },
+        "CorrectionDocInfo": {
+          "type": "TypedDict",
+          "fields": {
+            "doc_id": "str",
+            "doc_path": "str",
+            "url": "str",
+            "title": "str",
+            "original_content": "str",
+            "corrected_content": "str",
+            "issues": "list[CorrectionIssue]",
+            "changes_made": "list[str]",
+            "status": "str"
+          }
+        },
+        "CorrectionState": {
+          "type": "TypedDict",
+          "fields": {
+            "job_id": "str",
+            "round": "int",
+            "report_id": "str",
+            "documents": "list[CorrectionDocInfo]",
+            "total_legitimate": "int",
+            "total_false_positive": "int",
+            "total_corrected": "int",
+            "status": "str"
+          }
+        }
+      },
+      "src.agents.correction_agent": {
+        "receive_report": {
+          "type": "function",
+          "signature": "def receive_report(state: CorrectionState) -> dict"
+        },
+        "classify_issues": {
+          "type": "async function",
+          "signature": "async def classify_issues(state: CorrectionState) -> dict"
+        },
+        "plan_corrections": {
+          "type": "function",
+          "signature": "def plan_corrections(state: CorrectionState) -> dict"
+        },
+        "apply_corrections": {
+          "type": "async function",
+          "signature": "async def apply_corrections(state: CorrectionState) -> dict"
+        },
+        "save_corrections": {
+          "type": "function",
+          "signature": "def save_corrections(state: CorrectionState) -> dict"
+        },
+        "emit_complete": {
+          "type": "function",
+          "signature": "def emit_complete(state: CorrectionState) -> dict"
+        },
+        "build_correction_graph": {
+          "type": "function",
+          "signature": "def build_correction_graph() -> StateGraph"
+        },
+        "run_correction": {
+          "type": "async function",
+          "signature": "async def run_correction(job_id: str, correction_round: int, report_id: str) -> dict"
+        }
+      },
+      "src.agents.loop_orchestrator": {
+        "DEFAULT_MAX_ROUNDS": {
+          "type": "int",
+          "description": "Default max rounds (10)"
+        },
+        "run_audit_correct_loop": {
+          "type": "async function",
+          "signature": "async def run_audit_correct_loop(job_id: str, max_rounds: int = 10, starting_round: int = 1) -> dict"
+        }
+      },
+      "src.routers.loop": {
+        "router": {
+          "type": "APIRouter",
+          "description": "Loop orchestration router"
+        },
+        "start_audit_loop": {
+          "type": "async function",
+          "signature": "async def start_audit_loop(job_id: uuid.UUID, max_rounds: int, db: AsyncSession) -> dict"
+        },
+        "stop_audit_loop": {
+          "type": "async function",
+          "signature": "async def stop_audit_loop(job_id: uuid.UUID, db: AsyncSession) -> dict"
+        },
+        "get_loop_messages": {
+          "type": "async function",
+          "signature": "async def get_loop_messages(job_id: uuid.UUID) -> list[dict]"
+        }
+      }
+    },
+    "typescript": {
+      "src/store/api/loop-api.ts": {
+        "LoopRound": { "type": "interface" },
+        "LoopResult": { "type": "interface" },
+        "A2AMessageItem": { "type": "interface" },
+        "loopApi": { "type": "ReturnType<typeof apiSlice.injectEndpoints>" },
+        "useStartLoopMutation": { "type": "hook" },
+        "useStopLoopMutation": { "type": "hook" },
+        "useGetLoopMessagesQuery": { "type": "hook" }
+      }
+    }
+  },
+  "database_tables": [],
+  "api_endpoints": [
+    { "method": "POST", "path": "/api/v1/jobs/{job_id}/start-loop", "response": "LoopResult (202)" },
+    { "method": "POST", "path": "/api/v1/jobs/{job_id}/stop-loop", "response": "dict" },
+    { "method": "GET", "path": "/api/v1/jobs/{job_id}/loop-messages", "response": "list[A2AMessageItem]" }
+  ],
+  "docker_services": []
+}

@@ -165,11 +165,12 @@ Thumbs.db
 .docker/
 
 # ================ Docker Compose ================
-docker-compose*.yml
-.docker-compose.yml
+# Docker compose files should be tracked - uncomment next line to ignore
+# docker-compose*.yml
 
-# Traefik
-traefik*.yml
+# ================ Traefik ================
+# Traefik config files should be tracked - uncomment next line to ignore
+# traefik*.yml
 
 # ================ Database ================
 *.db
@@ -298,20 +299,20 @@ terraform.tfstate.backup
 *.tfplan
 
 # ================ CI/CD ================
-.github/
-.github/
-.gitlab-ci.yml
-.gitlab/
-.travis.yml
-appveyor.yml
-circle.yml
-buildkite.yml
-bitbucket-pipelines.yml
-drone.yml
-semaphore.yml
-teamcity.yml
-bamboo.yml
-jenkins.yml
+# CI/CD files should be tracked - uncomment next line to ignore
+# .github/
+# .gitlab-ci.yml
+# .gitlab/
+# .travis.yml
+# appveyor.yml
+# circle.yml
+# buildkite.yml
+# bitbucket-pipelines.yml
+# drone.yml
+# semaphore.yml
+# teamcity.yml
+# bamboo.yml
+# jenkins.yml
 
 # ================ Git ================
 .git/
@@ -320,30 +321,32 @@ jenkins.yml
 .gitmodules
 
 # ================ Scripts ================
-scripts/
-scripts/*.sh
-scripts/*.py
+# Scripts should be tracked - uncomment next line to ignore
+# scripts/
+# scripts/*.sh
+# scripts/*.py
 
 # ================ AI Workspace ================
 # Keep documentation but ignore temporary files
-ai-workspace/
 ai-workspace/*.tmp
 ai-workspace/*.temp
 ai-workspace/*.log
 
 # ================ Packages ================
-packages/
-packages/*/dist/
-packages/*/build/
-packages/*/node_modules/
+# Packages should be tracked - uncomment next line to ignore
+# packages/
+# packages/*/dist/
+# packages/*/build/
+# packages/*/node_modules/
 
 # ================ Apps ================
-apps/
-apps/*/dist/
-apps/*/build/
-apps/*/node_modules/
-apps/*/venv/
-apps/*/.venv/
+# Apps should be tracked - uncomment next line to ignore
+# apps/
+# apps/*/dist/
+# apps/*/build/
+# apps/*/node_modules/
+# apps/*/venv/
+# apps/*/.venv/
 
 # ================ Logs ================
 *.log

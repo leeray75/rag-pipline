@@ -1,0 +1,63 @@
+{
+  "dashboard": {
+    "title": "RAG Pipeline — Throughput",
+    "uid": "rag-throughput",
+    "panels": [
+      {
+        "title": "Jobs Created (rate)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(rag_jobs_created_total[5m])",
+            "legendFormat": "{{source_type}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      },
+      {
+        "title": "Agent Rounds Distribution",
+        "type": "histogram",
+        "targets": [
+          {
+            "expr": "rag_agent_rounds_per_job_bucket",
+            "legendFormat": "{{le}} rounds"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      },
+      {
+        "title": "Embed Latency P95",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(rag_embed_latency_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          }
+        ],
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 }
+      },
+      {
+        "title": "Chunks Embedded Total",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rag_chunks_embedded_total",
+            "legendFormat": "{{collection_name}}"
+          }
+        ],
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 }
+      },
+      {
+        "title": "Qdrant Upsert Latency",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(rag_qdrant_upsert_latency_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+      }
+    ]
+  }
+}
