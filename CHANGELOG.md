@@ -139,6 +139,21 @@ To verify Phase 1 completion, ensure:
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **LLM Alignment**: Updated crawler link discovery to use OpenAI-compatible endpoint (`http://spark-8013:4000/v1`) with `qwen3-coder-next` model, aligning with agent LLM configuration
+- **Dependencies**: Removed `langchain-anthropic` dependency (no longer used after LLM alignment)
+- **Configuration**: Added LLM configuration section to `.env.example` with `RAG_LLM_ENDPOINT`, `RAG_LLM_MODEL`, `RAG_LLM_API_KEY` variables
+
+### Added
+
+- Planning document for crawler LLM alignment (`ai-workspace/plans/crawler-llm-alignment.md`)
+- Implementation summary report (`ai-workspace/summary-reports/llm-alignment-summary-2026-04-22.md`)
+
+---
+
 ## Template for Future Entries
 
 ### Added

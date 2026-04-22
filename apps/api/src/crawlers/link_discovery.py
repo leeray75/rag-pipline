@@ -73,11 +73,11 @@ async def extract_links_with_llm(
     html: str,
     base_url: str,
 ) -> list[DiscoveredLink]:
-    """Use Claude to extract doc links when CSS selectors fail or find too few.
+    """Use Qwen to extract doc links when CSS selectors fail or find too few.
 
-    IMPORTANT: Requires ANTHROPIC_API_KEY environment variable.
+    IMPORTANT: Requires LLM endpoint configuration via RAG_LLM_ENDPOINT, RAG_LLM_MODEL, RAG_LLM_API_KEY.
     """
-    from langchain_anthropic import ChatAnthropic
+    from langchain_openai import ChatOpenAI
 
     # Trim HTML to nav-relevant sections to save tokens
     soup = BeautifulSoup(html, "html.parser")
@@ -87,7 +87,13 @@ async def extract_links_with_llm(
 
     nav_html = "\n---\n".join(nav_sections) if nav_sections else html[:10000]
 
-    llm = ChatAnthropic(model="claude-sonnet-4-20250514", max_tokens=4096, temperature=0)
+    llm = ChatOpenAI(
+        base_url="http://spark-8013:4000/v1",
+        model="qwen3-coder-next",
+        api_key="not-needed",
+        max_tokens=4096,
+        temperature=0
+    )
 
     prompt = f"""Extract all documentation page links from this HTML navigation.
 The base URL is: {base_url}
