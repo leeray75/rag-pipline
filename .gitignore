@@ -246,12 +246,15 @@ docs/_static/
 docs/_templates/
 
 # ================ AI / ML Training Artifacts ================
-models/
+# PyTorch / TensorFlow model files (not SQLAlchemy ORM models)
+models/*.h5
+models/*.keras
+models/*.pb
+models/*.pbtxt
+models/*.pt
+models/*.pth
+models/*.ckpt
 checkpoints/
-*.h5
-*.keras
-*.pb
-*.pbtxt
 *.ckpt
 *.pkl
 *.joblib
