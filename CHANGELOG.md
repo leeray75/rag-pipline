@@ -106,36 +106,39 @@ To verify Phase 1 completion, ensure:
 
 ---
 
-## [Unreleased] - Next Phases
+## [0.2.0] - 2026-04-23
 
-### Phase 2: Crawl & Convert (Planned)
-- URL fetching with HTTPX + Playwright
-- Document conversion using MarkItDown
-- Staging file browser UI
+### Added - Phase 6: Embedding Pipeline & Ingestion UI
 
-### Phase 3: Audit Agent (Planned)
-- LangGraph Audit Agent with 10 validation rules
-- Quality assessment and report generation
+- **Chunking Engine**: Created `MarkdownChunker` with tiktoken-aware chunking and heading-path tracking
+- **Embedding Service**: Created `FastEmbedService` for local ONNX embeddings (BAAI/bge-small-en-v1.5)
+- **Qdrant Integration**: Created `QdrantIngestService` for embedding and upserting chunks
+- **Ingestion API Router**: Added 8 endpoints for chunking, embedding, collections, and search
+- **Frontend Components**: Created `ChunkBrowser.tsx` and `EmbedToQdrant.tsx` UI components
+- **Database Models**: Added `ChunkRecord` and `VectorCollection` models
+- **Database Migration**: Added `2026_04_18_1708_add_chunks_and_update_vector_collections.py`
 
-### Phase 4: Correction Agent (Planned)
-- LangGraph Correction Agent
-- A2A Protocol v1.0 implementation
-- Iterative audit-correct loop
+### Added - Phase 7: Production Hardening & MCP Server
 
-### Phase 5: Human Review (Planned)
-- Review dashboard with Monaco editor
-- Approval/rejection workflow
+- **MCP Server**: Implemented FastMCP server with 7 tools (ingest_url, get_job_status, list_documents, get_audit_report, search_knowledge_base, approve_job, get_collection_stats)
+- **Observability Stack**: Integrated OpenTelemetry traces, Prometheus metrics, and structured logging
+- **Authentication**: Implemented JWT authentication with role-based access (viewer, editor, admin)
+- **Rate Limiting**: Added Slowapi-based rate limiting
+- **SSRF Prevention**: Created URL validator to block private IPs and non-HTTP schemes
+- **Delta Ingestion**: Added content hashing (SHA-256) for reingestion detection
+- **Health Endpoints**: Added `/health/ready` readiness check with dependency status
+- **Production Deployment**: Added resource limits, restart policies, and health checks
 
-### Phase 6: Vector Ingestion (Planned)
-- Markdown chunking with tiktoken
-- FastEmbed vector embeddings
-- Qdrant upsert pipeline
+### Changed
 
-### Phase 7: MCP & Hardening (Planned)
-- MCP server tools with 7 tools
-- Observability stack (Prometheus, Grafana, Tempo, Loki)
-- JWT authentication and rate limiting
-- Production hardening
+- **LLM Alignment**: Updated all agents (audit, correction, crawler) to use OpenAI-compatible endpoint (`http://spark-8013:4000/v1`) with `qwen3-coder-next` model
+- **Dependencies**: Removed `langchain-anthropic` dependency (no longer used after LLM alignment)
+- **Configuration**: Added LLM configuration section to `.env.example` with `RAG_LLM_ENDPOINT`, `RAG_LLM_MODEL`, `RAG_LLM_API_KEY` variables
+
+### Fixed
+
+- **A2A SDK Compatibility**: Updated to match a2a-sdk v0.3.26 API (snake_case field names, new enum values)
+- **Markitdown API**: Switched from `convert_html()` to `convert_local()` with temporary file
 
 ---
 

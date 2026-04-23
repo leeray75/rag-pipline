@@ -481,4 +481,4 @@ docker compose logs api | grep -i embedding
 
 ---
 
-*Last updated: 2026-04-19*
+*Last updated: 2026-04-23*

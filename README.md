@@ -18,7 +18,7 @@ URL → Fetch → Convert → Audit Agent → Correction Agent → Human Review 
 ### Key Features
 
 - **Automated Content Discovery**: Crawl documentation sites and discover linked pages using static and browser rendering modes
-- **AI-Powered Quality Control**: Schema validation and quality assessment using LangGraph agents with Claude LLM
+- **AI-Powered Quality Control**: Schema validation and quality assessment using LangGraph agents with OpenAI-compatible LLM (qwen3-coder-next)
 - **Human-in-the-Loop Review**: Interactive review dashboard with Monaco editor, diff viewer, and approval workflow
 - **Vector Embeddings**: Local ONNX embeddings with FastEmbed (BAAI/bge-small-en-v1.5)
 - **Vector Search**: Qdrant integration for semantic search and RAG retrieval
@@ -131,7 +131,7 @@ curl -X POST http://localhost:8000/api/v1/ingest/jobs/{job_id}/embed \
 │  4. Audit                                                           │
 │     └── LangGraph 6-node workflow:                                 │
 │         ├── validate_schema (deterministic rules)                  │
-│         ├── assess_quality (Claude LLM)                           │
+│         ├── assess_quality (OpenAI-compatible LLM)                │
 │         ├── check_duplicates (content hashing)                     │
 │         └── compile_report                                         │
 │                                                                      │
@@ -374,7 +374,7 @@ rag-pipeline/
 | Workflow Orchestrator | LangGraph | 1.1.6 |
 | A2A Protocol | a2a-sdk | 0.3.26 |
 | MCP Server | mcp | 1.27.0 |
-| LLM Integration | langchain-anthropic | >=0.4.0 |
+| LLM Integration | langchain-openai | >=0.3.0 |
 
 ### Frontend
 
@@ -436,4 +436,4 @@ For issues and questions:
 
 ---
 
-*Last updated: 2026-04-19*
+*Last updated: 2026-04-23*
