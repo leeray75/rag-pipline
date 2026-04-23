@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.1] - 2026-04-23
+
+### Fixed
+
+- Fixed `ERR_CONNECTION_REFUSED` error by adding missing SQLAlchemy ORM models
+- Added missing `Base` class to `src/database.py` for model inheritance
+- Created missing model files:
+  - `src/models/__init__.py`: Module exports
+  - `src/models/chunk.py`: `ChunkRecord`, `VectorCollection`, `IngestionJob`, `JobStatus`
+  - `src/models/document.py`: `Document`
+  - `src/models/review.py`: `ReviewComment`, `ReviewDecision`
+  - `src/models/audit.py`: `AuditReport`
+
+### Changed
+
+- Updated `src/models/__init__.py` to export all new models
+- Updated `src/database.py` to export `Base` class
+
+---
+
 ## [0.1.0] - 2026-04-15
 
 ### Added - Phase 1 Foundation (Subtasks 1-5)
