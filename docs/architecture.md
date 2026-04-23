@@ -83,7 +83,7 @@ Detailed technical architecture of the RAG Pipeline system.
 │  4. Audit                                                           │
 │     └── LangGraph 6-node workflow:                                 │
 │         ├── validate_schema (deterministic rules)                  │
-│         ├── assess_quality (Claude LLM)                           │
+│         ├── assess_quality (OpenAI-compatible LLM)                │
 │         ├── check_duplicates (content hashing)                     │
 │         └── compile_report                                         │
 │                                                                      │
@@ -226,7 +226,7 @@ Detailed technical architecture of the RAG Pipeline system.
 |------|-------------|
 | `load_documents` | Load staged Markdown files |
 | `validate_schema` | Rule-based validation (10 rules) |
-| `assess_quality` | Claude LLM quality assessment |
+| `assess_quality` | OpenAI-compatible LLM quality assessment |
 | `check_duplicates` | Content hash comparison |
 | `compile_report` | Aggregate results |
 | `save_report` | Store in database |
@@ -678,4 +678,4 @@ Log fields:
 
 ---
 
-*Last updated: 2026-04-19*
+*Last updated: 2026-04-23*
