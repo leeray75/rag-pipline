@@ -1,7 +1,6 @@
 """A2A Protocol v1.0 server wrapper for the Correction Agent."""
 
 import uuid
-from abc import ABC, abstractmethod
 from typing import Any
 
 from a2a.server.agent_execution import RequestContext
@@ -16,14 +15,12 @@ import structlog
 logger = structlog.get_logger()
 
 
-class CorrectionTaskHandler(ABC):
+class CorrectionTaskHandler:
     """Handle incoming A2A messages for the Correction Agent."""
 
-    @abstractmethod
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         """Execute the agent's logic for a given request context."""
 
-    @abstractmethod
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
         """Request the agent to cancel an ongoing task."""
 

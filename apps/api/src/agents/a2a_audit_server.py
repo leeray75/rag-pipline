@@ -1,7 +1,6 @@
 """A2A Protocol v1.0 server wrapper for the Audit Agent (Phase 3)."""
 
 import uuid
-from abc import ABC, abstractmethod
 from typing import Any
 
 from a2a.server.agent_execution import RequestContext
@@ -16,14 +15,12 @@ import structlog
 logger = structlog.get_logger()
 
 
-class AuditTaskHandler(ABC):
+class AuditTaskHandler:
     """Handle incoming A2A messages for the Audit Agent."""
 
-    @abstractmethod
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         """Execute the agent's logic for a given request context."""
 
-    @abstractmethod
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
         """Request the agent to cancel an ongoing task."""
 
