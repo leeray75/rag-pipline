@@ -11,6 +11,7 @@ A production-grade document ingestion pipeline that crawls documentation website
 - [Project Phases](#project-phases)
 - [Technology Stack](#technology-stack)
 - [MCP Integration](#mcp-integration)
+- [A2A Protocol Integration](#a2a-protocol-integration)
 - [Observability](#observability)
 - [Deployment](#deployment)
 
@@ -28,6 +29,7 @@ URL → Fetch → Convert → Audit Agent → Correction Agent → Human Review 
 
 - **Automated Content Discovery**: Crawl documentation sites and discover linked pages
 - **AI-Powered Quality Control**: Schema validation and quality assessment using LangGraph agents with OpenAI-compatible LLM (qwen3-coder-next)
+- **A2A Protocol Integration**: Agent-to-Agent communication via JSON-RPC for distributed agent workflows
 - **Human-in-the-Loop Review**: Interactive review dashboard with Monaco editor
 - **Vector Embeddings**: Local ONNX embeddings with FastEmbed
 - **Vector Search**: Qdrant integration for semantic search
@@ -180,7 +182,7 @@ curl http://localhost:8000/api/v1/jobs \
 | Migrations | Alembic | 1.18.4 |
 | Task Queue | Celery | 5.6.3 |
 | Workflow Orchestrator | LangGraph | 1.1.6 |
-| A2A Protocol | a2a-sdk | 0.3.26 |
+| A2A Protocol | a2a-sdk | 1.0.2 |
 | MCP Server | mcp | 1.27.0 |
 
 ### Frontend
@@ -247,6 +249,68 @@ Add to `claude_desktop_config.json`:
     }
   }
 }
+```
+
+---
+
+## A2A Protocol Integration
+
+The pipeline implements the [Agent2Agent (A2A) Protocol v1.0](https://a2a-protocol.org/) for distributed agent communication:
+
+```
+POST http://localhost:8000/a2a/audit
+POST http://localhost:8000/a2a/correction
+```
+
+### Agent Endpoints
+
+| Agent | Endpoint | Description |
+|-------|----------|-------------|
+| Audit Agent | `/a2a/audit` | Schema validation and quality assessment |
+| Correction Agent | `/a2a/correction` | Content correction and improvement |
+
+### Agent Discovery
+
+Agents expose their capabilities via `.well-known` endpoints:
+
+```
+GET http://localhost:8000/a2a/audit/.well-known/agent-card.json
+GET http://localhost:8000/a2a/correction/.well-known/agent-card.json
+```
+
+### Protocol Features
+
+- **Transport**: JSON-RPC over HTTP
+- **Streaming**: Real-time task status updates
+- **Task Management**: Submit, poll, and cancel tasks
+- **Artifacts**: Structured output with multiple data parts
+
+### Client Usage
+
+```python
+from a2a.client import ClientFactory, ClientConfig
+
+config = ClientConfig(
+    streaming=True,
+    polling=False,
+    supported_protocol_bindings=["JSONRPC", "HTTP+JSON"],
+    accepted_output_modes=["text", "data", "file"],
+)
+factory = ClientFactory(config=config)
+client = factory.create_from_url("http://localhost:8000/a2a/audit")
+
+# Send a message
+from a2a.types import Message, Part, Role
+from google.protobuf import json_format
+from google.protobuf.struct_pb2 import Value
+
+data_value = json_format.ParseDict({"input": "test"}, Value())
+message = Message(
+    message_id="msg-1",
+    role=Role.ROLE_USER,
+    parts=[Part(data=data_value)],
+)
+task = client.send_message(message)
 ```
 
 ---

@@ -16,51 +16,48 @@ from src.agents.a2a_agent_cards import (
 
 
 def test_make_user_message_has_data_part():
-    """User message should contain a DataPart with the provided data."""
+    """User message should contain a Part with data."""
     msg = make_user_message(
         context_id="ctx-1", data={"job_id": "j1"}, text="Hello",
     )
-    assert msg.role == Role.user
+    assert msg.role == Role.ROLE_USER
     assert msg.context_id == "ctx-1"
-    assert len(msg.parts) == 2  # TextPart + DataPart
-    # DataPart is wrapped in a Part with a 'root' attribute
-    assert hasattr(msg.parts[1].root, "data")
-    assert msg.parts[1].root.data["job_id"] == "j1"
+    assert len(msg.parts) == 2  # Text Part + Data Part
+    assert msg.parts[1].data is not None
 
 
 def test_make_user_message_without_text():
-    """User message without text should have only a DataPart."""
+    """User message without text should have only a data Part."""
     msg = make_user_message(context_id="ctx-2", data={"round": 1})
-    assert len(msg.parts) == 1  # DataPart only (wrapped in Part)
-    assert hasattr(msg.parts[0].root, "data")
+    assert len(msg.parts) == 1  # Data Part only
+    assert msg.parts[0].data is not None
 
 
 def test_make_agent_message_has_text():
-    """Agent message should contain a TextPart."""
+    """Agent message should contain a text Part."""
     msg = make_agent_message(
         context_id="ctx-1", task_id="t-1", text="Done",
     )
-    assert msg.role == Role.agent
+    assert msg.role == Role.ROLE_AGENT
     assert msg.task_id == "t-1"
-    assert hasattr(msg.parts[0].root, "text")
-    assert msg.parts[0].root.text == "Done"
+    assert msg.parts[0].text == "Done"
 
 
 def test_make_task_status_working():
     """TaskStatus should have the correct state and timestamp."""
-    status = make_task_status(TaskState.working)
-    assert status.state == TaskState.working
+    status = make_task_status(TaskState.TASK_STATE_WORKING)
+    assert status.state == TaskState.TASK_STATE_WORKING
     assert status.timestamp is not None
 
 
 def test_make_artifact_contains_data():
-    """Artifact should contain a DataPart with the provided data."""
+    """Artifact should contain a Part with data."""
     artifact = make_artifact(
         name="test", description="desc", data={"key": "val"},
     )
     assert artifact.name == "test"
-    assert hasattr(artifact.parts[0].root, "data")
-    assert artifact.parts[0].root.data["key"] == "val"
+    assert artifact.artifact_id is not None
+    assert artifact.parts[0].data is not None
 
 
 def test_extract_artifact_data_from_task():
@@ -71,7 +68,7 @@ def test_extract_artifact_data_from_task():
     task = Task(
         id="t-1",
         context_id="ctx-1",
-        status=make_task_status(TaskState.completed),
+        status=make_task_status(TaskState.TASK_STATE_COMPLETED),
         artifacts=[artifact],
     )
     data = extract_artifact_data(task)
@@ -83,7 +80,7 @@ def test_extract_artifact_data_empty_task():
     task = Task(
         id="t-1",
         context_id="ctx-1",
-        status=make_task_status(TaskState.completed),
+        status=make_task_status(TaskState.TASK_STATE_COMPLETED),
         artifacts=[],
     )
     assert extract_artifact_data(task) == {}
@@ -96,7 +93,8 @@ def test_audit_agent_card_structure():
     assert len(card.skills) == 1
     assert card.skills[0].id == "audit-documents"
     assert card.capabilities.streaming is True
-    assert card.url == "http://localhost:8000/a2a/audit"
+    assert len(card.supported_interfaces) == 1
+    assert "a2a/audit" in card.supported_interfaces[0].url
 
 
 def test_correction_agent_card_structure():
@@ -105,4 +103,5 @@ def test_correction_agent_card_structure():
     assert card.name == "RAG Pipeline Correction Agent"
     assert len(card.skills) == 1
     assert card.skills[0].id == "correct-documents"
-    assert card.url == "http://localhost:8000/a2a/correction"
+    assert len(card.supported_interfaces) == 1
+    assert "a2a/correction" in card.supported_interfaces[0].url

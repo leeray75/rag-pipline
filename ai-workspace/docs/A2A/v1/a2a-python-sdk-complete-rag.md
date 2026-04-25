@@ -353,3 +353,330 @@ a2a/
 - **Samples**: https://github.com/a2aproject/a2a-samples
 - **Inspector**: https://github.com/a2aproject/a2a-inspector
 - **DeepLearning.AI Course**: https://goo.gle/dlai-a2a
+
+## SDK v1.0.2 Migration Notes
+
+### Major API Changes from v0.3 to v1.0.2
+
+The A2A Python SDK v1.0.2 introduced significant API changes that require code updates:
+
+#### 1. Client API Changes
+
+| v0.3 | v1.0.2 |
+| :--- | :--- |
+| `A2AClient` | `Client` via `ClientFactory` |
+| Direct client instantiation | `ClientFactory(config=ClientConfig()).create_from_url(url)` |
+
+**Migration Example:**
+```python
+# v0.3 (deprecated)
+from a2a.client import A2AClient
+client = A2AClient(url="http://localhost:8000")
+
+# v1.0.2 (current)
+from a2a.client import Client, ClientFactory, ClientConfig
+
+config = ClientConfig(
+    streaming=True,
+    polling=False,
+    supported_protocol_bindings=["JSONRPC", "HTTP+JSON"],
+    accepted_output_modes=["text", "data", "file"],
+)
+factory = ClientFactory(config=config)
+client = factory.create_from_url("http://localhost:8000")
+```
+
+#### 2. Server API Changes
+
+| v0.3 | v1.0.2 |
+| :--- | :--- |
+| `A2AServer` | `DefaultRequestHandler` + `create_jsonrpc_routes()` |
+| Direct server class | Handler pattern with routes |
+
+**Migration Example:**
+```python
+# v0.3 (deprecated)
+from a2a.server import A2AServer
+server = A2AServer(agent_executor=MyExecutor())
+
+# v1.0.2 (current)
+from a2a.server import DefaultRequestHandler, InMemoryTaskStore
+from a2a.server.routes import create_jsonrpc_routes
+
+handler = DefaultRequestHandler(
+    agent_executor=MyExecutor(),
+    task_store=InMemoryTaskStore(),
+    agent_card=agent_card,
+)
+routes = create_jsonrpc_routes(
+    request_handler=handler,
+    rpc_url="/a2a/audit",
+    enable_v0_3_compat=False,
+)
+```
+
+#### 3. AgentCard Structure Changes
+
+| v0.3 | v1.0.2 |
+| :--- | :--- |
+| `AgentCard(url=...)` | `AgentCard(supported_interfaces=[AgentInterface(url=...)])` |
+| Single URL field | List of AgentInterface objects |
+
+**Migration Example:**
+```python
+# v0.3 (deprecated)
+from a2a.types import AgentCard, AgentCapabilities
+
+card = AgentCard(
+    name="My Agent",
+    url="http://localhost:8000/a2a",
+    version="1.0.0",
+    capabilities=AgentCapabilities(streaming=True, pushNotifications=False),
+)
+
+# v1.0.2 (current)
+from a2a.types import AgentCard, AgentCapabilities, AgentInterface
+
+card = AgentCard(
+    name="My Agent",
+    supported_interfaces=[AgentInterface(url="http://localhost:8000/a2a")],
+    version="1.0.0",
+    capabilities=AgentCapabilities(streaming=True, push_notifications=False),
+)
+```
+
+#### 4. Role Enum Values
+
+| v0.3 | v1.0.2 |
+| :--- | :--- |
+| `Role.user` | `Role.ROLE_USER` |
+| `Role.agent` | `Role.ROLE_AGENT` |
+
+**Migration Example:**
+```python
+# v0.3 (deprecated)
+from a2a.types import Role
+message = Message(role=Role.user, ...)
+
+# v1.0.2 (current)
+from a2a.types import Role
+message = Message(role=Role.ROLE_USER, ...)
+```
+
+#### 5. TaskState Enum Values
+
+| v0.3 | v1.0.2 |
+| :--- | :--- |
+| `TaskState.submitted` | `TaskState.TASK_STATE_SUBMITTED` |
+| `TaskState.working` | `TaskState.TASK_STATE_WORKING` |
+| `TaskState.completed` | `TaskState.TASK_STATE_COMPLETED` |
+| `TaskState.failed` | `TaskState.TASK_STATE_FAILED` |
+| `TaskState.canceled` | `TaskState.TASK_STATE_CANCELED` |
+
+**Migration Example:**
+```python
+# v0.3 (deprecated)
+from a2a.types import TaskState
+status = TaskStatus(state=TaskState.working, ...)
+
+# v1.0.2 (current)
+from a2a.types import TaskState
+status = TaskStatus(state=TaskState.TASK_STATE_WORKING, ...)
+```
+
+### Protocol Buffer Field Naming Conventions
+
+The SDK v1.0.2 uses **snake_case** field names in Protocol Buffer messages:
+
+| camelCase (deprecated) | snake_case (current) |
+| :--- | :--- |
+| `taskId` | `task_id` |
+| `messageId` | `message_id` |
+| `artifactId` | `artifact_id` |
+| `contextId` | `context_id` |
+| `pushNotifications` | `push_notifications` |
+| `supportedInterfaces` | `supported_interfaces` |
+| `outputModes` | `output_modes` |
+
+### Protobuf Type Requirements
+
+#### Part.data Field
+
+The `Part.data` field requires a protobuf `Value` type, not a Python dict:
+
+```python
+# Correct way (v1.0.2)
+from google.protobuf import json_format
+from google.protobuf.struct_pb2 import Value
+from a2a.types import Part
+
+data_value = json_format.ParseDict({"key": "value"}, Value())
+part = Part(data=data_value)
+
+# INCORRECT - passing dict directly will fail
+part = Part(data={"key": "value"})  # ValueError!
+```
+
+#### TaskStatus.timestamp Field
+
+The `timestamp` field requires a protobuf `Timestamp` object:
+
+```python
+# Correct way (v1.0.2)
+from google.protobuf.timestamp_pb2 import Timestamp
+from datetime import datetime, timezone
+from a2a.types import TaskStatus
+
+ts = Timestamp()
+ts.FromDatetime(datetime.now(timezone.utc))
+status = TaskStatus(state=TaskState.TASK_STATE_WORKING, timestamp=ts)
+
+# INCORRECT - passing string will fail
+status = TaskStatus(state=TaskState.TASK_STATE_WORKING, timestamp="2024-01-01T00:00:00Z")  # ValueError!
+```
+
+### Common Migration Errors and Fixes
+
+#### Error 1: ImportError - A2AClient not found
+```
+ImportError: cannot import name 'A2AClient' from 'a2a.client'
+```
+**Fix:** Use `Client` via `ClientFactory` instead.
+
+#### Error 2: ImportError - A2AServer not found
+```
+ImportError: cannot import name 'A2AServer' from 'a2a.server'
+```
+**Fix:** Use `DefaultRequestHandler` with `create_jsonrpc_routes()`.
+
+#### Error 3: ValueError - Protocol message has no "pushNotifications" field
+```
+ValueError: Protocol message AgentCapabilities has no "pushNotifications" field
+```
+**Fix:** Use `push_notifications` (snake_case).
+
+#### Error 4: ValueError - Protocol message AgentCard has no "url" field
+```
+ValueError: Protocol message AgentCard has no "url" field
+```
+**Fix:** Use `supported_interfaces=[AgentInterface(url=...)]`.
+
+#### Error 5: AttributeError - TaskStatus.timestamp must be Timestamp object
+```
+AttributeError: 'str' object has no attribute 'utctimetuple'
+```
+**Fix:** Create `Timestamp()` object and use `FromDatetime()` method.
+
+#### Error 6: ValueError - Protocol message Value has no "test" field
+```
+ValueError: Protocol message Value has no "test" field
+```
+**Fix:** Use `json_format.ParseDict(data, Value())` to convert dict to protobuf Value.
+
+#### Error 7: AttributeError - Assignment not allowed to message field "data"
+```
+AttributeError: Assignment not allowed to message field "data" in protocol message object
+```
+**Fix:** Set `data` in constructor, not after creation.
+
+### Complete Working Example (v1.0.2)
+
+```python
+# Server implementation
+from abc import ABC, abstractmethod
+from google.protobuf import json_format
+from google.protobuf.struct_pb2 import Value
+from google.protobuf.timestamp_pb2 import Timestamp
+from datetime import datetime, timezone
+from a2a.server import DefaultRequestHandler, InMemoryTaskStore
+from a2a.server.routes import create_jsonrpc_routes
+from a2a.types import (
+    AgentCard,
+    AgentCapabilities,
+    AgentInterface,
+    AgentExecutor,
+    TaskState,
+    Message,
+    Part,
+    Role,
+)
+
+class MyAgentExecutor(AgentExecutor):
+    async def execute(self, context, event_queue):
+        # Your agent logic here
+        pass
+    
+    async def cancel(self, context, event_queue):
+        # Cancel logic here
+        pass
+
+def build_agent_card(base_url: str) -> AgentCard:
+    return AgentCard(
+        name="My Agent",
+        supported_interfaces=[AgentInterface(url=f"{base_url}/a2a")],
+        version="1.0.0",
+        capabilities=AgentCapabilities(
+            streaming=True,
+            push_notifications=False,
+        ),
+    )
+
+# Create server routes
+handler = DefaultRequestHandler(
+    agent_executor=MyAgentExecutor(),
+    task_store=InMemoryTaskStore(),
+    agent_card=build_agent_card("http://localhost:8000"),
+)
+routes = create_jsonrpc_routes(
+    request_handler=handler,
+    rpc_url="/a2a",
+    enable_v0_3_compat=False,
+)
+
+# Client usage
+from a2a.client import ClientFactory, ClientConfig
+
+config = ClientConfig(
+    streaming=True,
+    polling=False,
+    supported_protocol_bindings=["JSONRPC", "HTTP+JSON"],
+    accepted_output_modes=["text", "data", "file"],
+)
+factory = ClientFactory(config=config)
+client = factory.create_from_url("http://localhost:8000/a2a")
+
+# Send message with protobuf Value
+data_value = json_format.ParseDict({"input": "test"}, Value())
+message = Message(
+    message_id="msg-1",
+    role=Role.ROLE_USER,
+    parts=[Part(data=data_value)],
+)
+task = client.send_message(message)
+```
+
+### Testing Your Migration
+
+After migrating, verify your implementation with these checks:
+
+1. **Enum values use uppercase prefix**: `Role.ROLE_USER`, `TaskState.TASK_STATE_WORKING`
+2. **Field names use snake_case**: `task_id`, `push_notifications`, `supported_interfaces`
+3. **Protobuf types used correctly**: `Value()` for data, `Timestamp()` for timestamps
+4. **ClientFactory pattern used**: `ClientFactory(config=...).create_from_url(...)`
+5. **Handler pattern used**: `DefaultRequestHandler` with `create_jsonrpc_routes()`
+
+### Version Pinning
+
+To avoid unexpected breaking changes, pin the SDK version in your `pyproject.toml`:
+
+```toml
+[project]
+dependencies = [
+    "a2a-sdk>=1.0.0,<2.0.0",
+]
+```
+
+Or use `uv`:
+```bash
+uv add "a2a-sdk>=1.0.0,<2.0.0"
+```

@@ -7,6 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-04-25
+
+### Added
+
+#### A2A Protocol v1.0.2 SDK Integration
+- Updated A2A Python SDK to v1.0.2 with full compatibility
+- Created [`a2a_servers.py`](rag-pipline/apps/api/src/agents/a2a_servers.py) for server instances with new `DefaultRequestHandler` pattern
+- Created [`a2a_audit_server.py`](rag-pipline/apps/api/src/agents/a2a_audit_server.py) with `AgentExecutor` interface implementation
+- Created [`a2a_correction_server.py`](rag-pipline/apps/api/src/agents/a2a_correction_server.py) with `AgentExecutor` interface implementation
+- Created [`a2a_helpers.py`](rag-pipline/apps/api/src/agents/a2a_helpers.py) with protobuf-compatible helper functions
+- Created [`a2a_agent_cards.py`](rag-pipline/apps/api/src/agents/a2a_agent_cards.py) with updated `AgentCard` structure using `supported_interfaces`
+- Created [`a2a_loop_orchestrator.py`](rag-pipline/apps/api/src/agents/a2a_loop_orchestrator.py) with `ClientFactory` pattern
+- Updated [`a2a_discovery.py`](rag-pipline/apps/api/src/routers/a2a_discovery.py) with `.well-known/agent-card.json` endpoints
+- Updated [`loop.py`](rag-pipline/apps/api/src/routers/loop.py) to use new client API
+- Updated [`main.py`](rag-pipline/apps/api/src/main.py) to mount A2A routes at `/a2a/audit` and `/a2a/correction`
+- Updated [`config.py`](rag-pipline/apps/api/src/config.py) with A2A configuration settings
+
+#### Configuration
+- Added `a2a_base_url` setting (default: `http://localhost:8000`)
+- Added `a2a_streaming_enabled` setting (default: `true`)
+- Added `a2a_push_notifications_enabled` setting (default: `false`)
+
+#### Infrastructure
+- Updated [`traefik-config.yml`](rag-pipline/infra/traefik-config.yml) with A2A routers for `/a2a/audit` and `/a2a/correction`
+- Updated [`docker-compose.yml`](rag-pipline/infra/docker-compose.yml) with A2A Traefik labels
+- Updated [`docker-compose.dev.yml`](rag-pipline/infra/docker-compose.dev.yml) with full A2A configuration
+
+#### Testing
+- Updated [`test_a2a_helpers.py`](rag-pipline/apps/api/tests/test_a2a_helpers.py) with protobuf-compatible tests
+- All 9 A2A helper tests passing
+
+### Changed
+
+#### SDK API Migration
+- `A2AClient` → `Client` via `ClientFactory`
+- `A2AServer` → `DefaultRequestHandler` with `create_jsonrpc_routes()`
+- `AgentCard.url` → `AgentCard.supported_interfaces` with `AgentInterface`
+- `AgentCapabilities.pushNotifications` → `AgentCapabilities.push_notifications`
+- `Role.user`/`Role.agent` → `Role.ROLE_USER`/`Role.ROLE_AGENT`
+- `TaskState.submitted` → `TaskState.TASK_STATE_SUBMITTED` (and other states)
+- `TaskStatus.timestamp` now requires protobuf `Timestamp` object
+
+#### Field Naming Conventions
+- All Protocol Buffer fields now use snake_case:
+  - `taskId` → `task_id`
+  - `messageId` → `message_id`
+  - `artifactId` → `artifact_id`
+  - `contextId` → `context_id`
+  - `supportedInterfaces` → `supported_interfaces`
+
+#### Protobuf Type Requirements
+- `Part.data` now requires protobuf `Value` type (use `json_format.ParseDict()`)
+- `TaskStatus.timestamp` now requires protobuf `Timestamp` type (use `Timestamp.FromDatetime()`)
+
+### Fixed
+
+- Fixed `ValueError` for Protocol Buffer field naming (snake_case required)
+- Fixed `AttributeError` for protobuf message immutability
+- Fixed `TypeError` for timestamp field type requirements
+
+### Removed
+
+- Deprecated `A2AClient` class (replaced by `Client` via `ClientFactory`)
+- Deprecated `A2AServer` class (replaced by `DefaultRequestHandler` pattern)
+
+---
+
+## [0.1.1] - 2026-04-23
+
 ## [0.1.1] - 2026-04-23
 
 ### Fixed

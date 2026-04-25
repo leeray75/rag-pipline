@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 
+from src.config import settings
 from src.logging_config import configure_logging
 from src.mcp.http_transport import mcp_lifespan, mcp_starlette_app
 from src.routers import (
@@ -23,6 +24,7 @@ from src.routers import (
 from src.rate_limit import limiter, rate_limit_exceeded_handler
 from src.telemetry import configure_telemetry
 from src.metrics import configure_metrics
+from src.agents.a2a_servers import get_audit_routes, get_correction_routes
 
 # Configure structured logging before app creation
 configure_logging()
@@ -32,9 +34,20 @@ configure_logging()
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan handler — startup and shutdown.
 
-    Starts the MCP Streamable HTTP session manager alongside the FastAPI app
+    Starts the MCP Streamable HTTP session manager and A2A servers alongside the FastAPI app
     so that the session manager task group is active for the full server lifetime.
     """
+    # Create and mount A2A server routes
+    base_url = settings.a2a_base_url
+    audit_routes = get_audit_routes(base_url)
+    correction_routes = get_correction_routes(base_url)
+
+    # Mount the routes at /a2a/audit and /a2a/correction
+    for route in audit_routes:
+        app.router.routes.append(route)
+    for route in correction_routes:
+        app.router.routes.append(route)
+
     async with mcp_lifespan():
         yield
 

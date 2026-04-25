@@ -12,6 +12,22 @@ http:
         - web
       priority: 1
 
+    # A2A Audit Agent
+    a2a-audit:
+      rule: "PathPrefix(`/a2a/audit`)"
+      service: a2a-audit
+      entryPoints:
+        - web
+      priority: 2
+
+    # A2A Correction Agent
+    a2a-correction:
+      rule: "PathPrefix(`/a2a/correction`)"
+      service: a2a-correction
+      entryPoints:
+        - web
+      priority: 2
+
   services:
     api:
       loadBalancer:
@@ -23,3 +39,15 @@ http:
       loadBalancer:
         servers:
           - url: "http://web:3000"
+    a2a-audit:
+      loadBalancer:
+        servers:
+          - url: "http://api:8000"
+        healthCheck:
+          path: "/a2a/audit/.well-known/agent-card.json"
+    a2a-correction:
+      loadBalancer:
+        servers:
+          - url: "http://api:8000"
+        healthCheck:
+          path: "/a2a/correction/.well-known/agent-card.json"

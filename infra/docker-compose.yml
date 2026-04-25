@@ -35,6 +35,16 @@ services:
       - QDRANT_URL=http://qdrant:6333
     labels:
       - "traefik.enable=true"
+      # A2A Audit Agent routes
+      - "traefik.http.routers.a2a-audit.rule=PathPrefix(`/a2a/audit`)"
+      - "traefik.http.routers.a2a-audit.entrypoints=web"
+      - "traefik.http.routers.a2a-audit.priority=2"
+      - "traefik.http.services.a2a-audit.loadbalancer.server.port=8000"
+      # A2A Correction Agent routes
+      - "traefik.http.routers.a2a-correction.rule=PathPrefix(`/a2a/correction`)"
+      - "traefik.http.routers.a2a-correction.entrypoints=web"
+      - "traefik.http.routers.a2a-correction.priority=2"
+      - "traefik.http.services.a2a-correction.loadbalancer.server.port=8000"
     networks:
       - rag-network
 

@@ -1,8 +1,12 @@
 """A2A Protocol v1.0 server wrapper for the Correction Agent."""
 
 import uuid
-from a2a.server import A2AServer, TaskHandler
-from a2a.types import SendMessageRequest, Task, TaskState
+from abc import ABC, abstractmethod
+from typing import Any
+
+from a2a.server.agent_execution import RequestContext
+from a2a.server.events import EventQueue
+from a2a.types import Task, TaskState, TaskStatus
 
 from src.agents.correction_agent import run_correction
 from src.agents.a2a_helpers import make_agent_message, make_task_status, make_artifact
@@ -12,10 +16,18 @@ import structlog
 logger = structlog.get_logger()
 
 
-class CorrectionTaskHandler(TaskHandler):
+class CorrectionTaskHandler(ABC):
     """Handle incoming A2A messages for the Correction Agent."""
 
-    async def on_message(self, request: SendMessageRequest) -> Task:
+    @abstractmethod
+    async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
+        """Execute the agent's logic for a given request context."""
+
+    @abstractmethod
+    async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
+        """Request the agent to cancel an ongoing task."""
+
+    async def on_message_send(self, request: Any) -> Task:
         """Process a correction request via A2A protocol."""
         message = request.message
         task_id = str(uuid.uuid4())
@@ -63,3 +75,12 @@ class CorrectionTaskHandler(TaskHandler):
             task.status = make_task_status(TaskState.TASK_STATE_FAILED, err)
 
         return task
+
+    async def on_cancel(self, request: Any) -> Task:
+        """Cancel an ongoing correction task."""
+        task_id = request.taskId
+        logger.info("correction_task_cancelled", task_id=task_id)
+        return Task(
+            id=task_id,
+            status=make_task_status(TaskState.TASK_STATE_CANCELED),
+        )

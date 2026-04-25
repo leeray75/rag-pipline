@@ -2,7 +2,7 @@
 
 import uuid
 
-from a2a.client import A2AClient
+from a2a.client import Client, ClientConfig, ClientFactory
 from a2a.types import Task, TaskState
 
 from src.agents.a2a_helpers import make_user_message, extract_artifact_data
@@ -14,9 +14,21 @@ logger = structlog.get_logger()
 DEFAULT_MAX_ROUNDS = 10
 
 
+def create_a2a_client(url: str) -> Client:
+    """Create an A2A client with proper configuration."""
+    config = ClientConfig(
+        streaming=True,
+        polling=False,
+        supported_protocol_bindings=["JSONRPC", "HTTP+JSON"],
+        accepted_output_modes=["text", "data", "file"],
+    )
+    factory = ClientFactory(config=config)
+    return factory.create_from_url(url)
+
+
 async def run_audit_correct_loop(
-    audit_client: A2AClient,
-    correction_client: A2AClient,
+    audit_client: Client,
+    correction_client: Client,
     job_id: str,
     max_rounds: int = DEFAULT_MAX_ROUNDS,
     starting_round: int = 1,
@@ -30,8 +42,8 @@ async def run_audit_correct_loop(
     4. Loop until convergence or max_rounds
 
     Args:
-        audit_client: A2AClient configured for the audit agent server.
-        correction_client: A2AClient configured for the correction agent server.
+        audit_client: Client configured for the audit agent server.
+        correction_client: Client configured for the correction agent server.
         job_id: The ingestion job ID to process.
         max_rounds: Maximum number of audit-correct iterations.
         starting_round: The round number to start from.
