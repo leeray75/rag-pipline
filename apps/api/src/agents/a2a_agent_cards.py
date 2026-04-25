@@ -1,6 +1,6 @@
 """A2A Protocol v1.0 — Agent Card definitions for Audit and Correction agents."""
 
-from a2a.types import AgentCard, AgentSkill, AgentCapabilities
+from a2a.types import AgentCard, AgentInterface, AgentSkill, AgentCapabilities
 
 # Use the lowercase string values directly for modes
 INPUT_MODES_JSON = ["application/json"]
@@ -13,11 +13,11 @@ def build_audit_agent_card(base_url: str) -> AgentCard:
         name="RAG Pipeline Audit Agent",
         description="Validates Markdown documents against a 10-rule schema. "
         "Produces structured audit reports with issue classifications.",
-        url=f"{base_url}/a2a/audit",
+        supported_interfaces=[AgentInterface(url=f"{base_url}/a2a/audit")],
         version="1.0.0",
         default_input_modes=INPUT_MODES_JSON,
         default_output_modes=OUTPUT_MODES_JSON,
-        capabilities=AgentCapabilities(streaming=True, pushNotifications=False),
+        capabilities=AgentCapabilities(streaming=True, push_notifications=False),
         skills=[
             AgentSkill(
                 id="audit-documents",
@@ -38,11 +38,11 @@ def build_correction_agent_card(base_url: str) -> AgentCard:
         name="RAG Pipeline Correction Agent",
         description="Classifies audit issues as LEGITIMATE or FALSE_POSITIVE using an LLM, "
         "then applies corrections to Markdown documents.",
-        url=f"{base_url}/a2a/correction",
+        supported_interfaces=[AgentInterface(url=f"{base_url}/a2a/correction")],
         version="1.0.0",
         default_input_modes=INPUT_MODES_JSON,
         default_output_modes=OUTPUT_MODES_JSON,
-        capabilities=AgentCapabilities(streaming=True, pushNotifications=False),
+        capabilities=AgentCapabilities(streaming=True, push_notifications=False),
         skills=[
             AgentSkill(
                 id="correct-documents",

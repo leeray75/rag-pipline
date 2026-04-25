@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://redis:6379/1"
     celery_result_backend: str = "redis://redis:6379/2"
 
+    # A2A Protocol
+    a2a_base_url: str = "http://localhost:8000"
+    a2a_streaming_enabled: bool = True
+    a2a_push_notifications_enabled: bool = False
+
     model_config = {"env_prefix": "RAG_", "env_file": ".env"}
 
 

@@ -6,9 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config import settings
 from src.database import get_db
 from src.models import IngestionJob, JobStatus
-from src.agents.a2a_loop_orchestrator import run_audit_correct_loop
+from src.agents.a2a_loop_orchestrator import create_a2a_client, run_audit_correct_loop
 
 import structlog
 
@@ -39,12 +40,10 @@ async def start_audit_loop(
     job.status = JobStatus.AUDITING
     await db.commit()
 
-    # Create A2A clients for both agent servers
-    from a2a.client import A2AClient
-
-    base_url = "http://localhost:8000"
-    audit_client = A2AClient(url=f"{base_url}/a2a/audit")
-    correction_client = A2AClient(url=f"{base_url}/a2a/correction")
+    # Create A2A clients for both agent servers using the helper function
+    base_url = settings.a2a_base_url
+    audit_client = create_a2a_client(url=f"{base_url}/a2a/audit")
+    correction_client = create_a2a_client(url=f"{base_url}/a2a/correction")
 
     loop_result = await run_audit_correct_loop(
         audit_client=audit_client,

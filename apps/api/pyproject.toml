@@ -1,6 +1,6 @@
 [project]
 name = "rag-pipeline-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "RAG Pipeline FastAPI Backend"
 requires-python = ">=3.13"
 dependencies = [
@@ -27,7 +27,7 @@ dependencies = [
     "langchain-openai>=0.3.0",
     "pydantic-ai>=0.1.0",
     "numpy>=2.0.0",
-    "a2a-sdk",
+    "a2a-sdk>=1.0.0,<2.0.0",
     "fastembed>=0.8.0,<1.0.0",
     "tiktoken>=0.12.0,<1.0.0",
     "qdrant-client>=1.17.1,<2.0.0",

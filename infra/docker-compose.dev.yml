@@ -1,14 +1,66 @@
 services:
+  # --- Reverse Proxy ---
+  traefik:
+    image: traefik:v3.6.13
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/etc/traefik/config"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080" # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik-config.yml:/etc/traefik/config/traefik.yml:ro
+    networks:
+      - rag-network
+
+  # --- FastAPI Backend ---
   api:
     build:
       context: ../apps/api
+      dockerfile: Dockerfile
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ../apps/api/src:/app/src:cached
       - staging-data:/app/data/staging
     environment:
       - RAG_DATABASE_URL=postgresql+asyncpg://rag_user:rag_pass@postgres:5432/rag_pipeline
+      - RAG_REDIS_URL=redis://redis:6379/0
+      - RAG_QDRANT_HOST=qdrant
+      - RAG_CELERY_BROKER_URL=redis://redis:6379/1
+      - RAG_CELERY_RESULT_BACKEND=redis://redis:6379/2
+      # --- Phase 6: Embedding & Ingestion ---
+      - EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
+      - EMBEDDING_BATCH_SIZE=100
+      - QDRANT_URL=http://qdrant:6333
+      # --- A2A Protocol ---
+      - RAG_A2A_BASE_URL=http://localhost:8000
+      - RAG_A2A_STREAMING_ENABLED=true
+      - RAG_A2A_PUSH_NOTIFICATIONS_ENABLED=false
+    labels:
+      - "traefik.enable=true"
+      # A2A Audit Agent routes
+      - "traefik.http.routers.a2a-audit.rule=PathPrefix(`/a2a/audit`)"
+      - "traefik.http.routers.a2a-audit.entrypoints=web"
+      - "traefik.http.routers.a2a-audit.priority=2"
+      - "traefik.http.services.a2a-audit.loadbalancer.server.port=8000"
+      # A2A Correction Agent routes
+      - "traefik.http.routers.a2a-correction.rule=PathPrefix(`/a2a/correction`)"
+      - "traefik.http.routers.a2a-correction.entrypoints=web"
+      - "traefik.http.routers.a2a-correction.priority=2"
+      - "traefik.http.services.a2a-correction.loadbalancer.server.port=8000"
+    networks:
+      - rag-network
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
 
+  # --- Next.js Frontend ---
   web:
     build:
       context: ../apps/web
@@ -18,8 +70,84 @@ services:
       - ../apps/web/src:/app/src:cached
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost/api/v1
+    labels:
+      - "traefik.enable=true"
+    networks:
+      - rag-network
 
+  # --- Celery Worker ---
   celery-worker:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
     command: celery -A src.workers.celery_app worker --loglevel=debug --concurrency=2
     volumes:
       - ../apps/api/src:/app/src:cached
+      - staging-data:/app/data/staging
+    environment:
+      - RAG_DATABASE_URL=postgresql+asyncpg://rag_user:rag_pass@postgres:5432/rag_pipeline
+      - RAG_REDIS_URL=redis://redis:6379/0
+      - RAG_CELERY_BROKER_URL=redis://redis:6379/1
+      - RAG_CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      - api
+      - redis
+    networks:
+      - rag-network
+
+  # --- PostgreSQL ---
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: rag_user
+      POSTGRES_PASSWORD: rag_pass
+      POSTGRES_DB: rag_pipeline
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag_user -d rag_pipeline"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rag-network
+
+  # --- Redis ---
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rag-network
+
+  # --- Qdrant ---
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334" # gRPC
+    volumes:
+      - qdrant-data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    networks:
+      - rag-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  qdrant-data:
+  staging-data:
+
+networks:
+  rag-network:
+    driver: bridge
