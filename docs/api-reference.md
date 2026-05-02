@@ -101,6 +101,33 @@ curl http://localhost:8000/api/v1/jobs \
 
 ## Ingestion Jobs
 
+### List Jobs
+
+Retrieve a list of all ingestion jobs sorted by creation date (newest first).
+
+**Endpoint**
+
+```
+GET /api/v1/jobs
+```
+
+**Response (200 OK)**
+
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "url": "https://example.com/docs",
+    "status": "crawling",
+    "crawl_all_docs": true,
+    "total_documents": 0,
+    "processed_documents": 0,
+    "current_audit_round": 0,
+    "created_at": "2026-04-19T01:00:00Z"
+  }
+]
+```
+
 ### Create Job
 
 Create a new ingestion job from a URL.

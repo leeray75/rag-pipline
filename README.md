@@ -360,50 +360,16 @@ rag-pipeline/
 | Phase 5 | ✅ Complete | Human Review Interface |
 | Phase 6 | ✅ Complete | Chunking, Embedding, Qdrant Integration |
 | Phase 7 | ✅ Complete | MCP Server, Observability, Auth, Production Hardening |
+| Phase 8 | ✅ Complete | Jobs List Page - Frontend job listing table |
 
 ## Technology Stack
 
-### Backend
-
 | Component | Technology | Version |
 |-----------|------------|---------|
-| Web Framework | FastAPI | 0.135.3 |
-| ORM | SQLAlchemy | 2.0.49 |
-| Migrations | Alembic | 1.18.4 |
-| Task Queue | Celery | 5.6.3 |
-| Workflow Orchestrator | LangGraph | 1.1.6 |
-| A2A Protocol | a2a-sdk | 0.3.26 |
-| MCP Server | mcp | 1.27.0 |
-| LLM Integration | langchain-openai | >=0.3.0 |
-
-### Frontend
-
-| Component | Technology | Version |
-|-----------|------------|---------|
-| Framework | Next.js | 16.2.3 |
-| State Management | Redux Toolkit | 2.11.2 |
-| API Client | RTK Query | - |
-| UI Library | shadcn/ui | 4.x |
-| Markdown Editor | Monaco Editor | 4.7.0 |
-
-### Infrastructure
-
-| Component | Technology | Version |
-|-----------|------------|---------|
-| Container Runtime | Docker | 27.x |
-| Database | PostgreSQL | 17 |
-| Cache | Redis | 7.x |
-| Vector DB | Qdrant | 1.13+ |
-| Reverse Proxy | Traefik | 3.6.13 |
-
-### Observability
-
-| Component | Technology | Version |
-|-----------|------------|---------|
-| Metrics | Prometheus | 3.4 |
-| Tracing | Grafana Tempo | 2.7 |
-| Logging | Grafana Loki | 3.5 |
-| Dashboards | Grafana | 11.6 |
+| Backend | FastAPI, SQLAlchemy, Alembic, Celery, LangGraph |
+| Frontend | Next.js 16, Redux, shadcn/ui, Monaco Editor |
+| infra | PostgreSQL, Redis, Qdrant, Traefik |
+| Observability | Prometheus, Grafana Tempo, Loki |
 
 ## Documentation
 
