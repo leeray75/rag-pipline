@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.models import Document, IngestionJob, JobStatus
-from src.schemas import DocumentResponse, JobCreate, JobResponse, JobStatusResponse
+from src.schemas import DocumentResponse, JobCreate, JobListResponse, JobResponse, JobStatusResponse
 from src.workers.crawl_tasks import start_crawl_pipeline
 
 import structlog
@@ -57,6 +57,15 @@ async def get_job(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+
+@router.get("/jobs", response_model=list[JobListResponse])
+async def list_jobs(db: AsyncSession = Depends(get_db)):
+    """List all ingestion jobs."""
+    result = await db.execute(
+        select(IngestionJob).order_by(IngestionJob.created_at.desc())
+    )
+    return result.scalars().all()
 
 
 @router.get("/jobs/{job_id}/status", response_model=JobStatusResponse)

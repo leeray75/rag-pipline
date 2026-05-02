@@ -72,6 +72,13 @@ export default function IngestionPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Jobs List Link */}
+      <div className="mt-8">
+        <Button asChild variant="outline" className="w-full">
+          <a href="/jobs">View All Jobs</a>
+        </Button>
+      </div>
     </main>
   );
 }
