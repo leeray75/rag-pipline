@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-05-02
+
+### Added
+
+#### Jobs List Page
+- Added `GET /api/v1/jobs` endpoint to list all ingestion jobs
+- Created `JobListResponse` schema for job listing
+- Implemented `jobs/page.tsx` frontend page with table view of all jobs
+- Created `Table` UI component (`table.tsx`) with TableHeader, TableBody, TableRow, TableHead, TableCell
+- Added `useListJobsQuery` hook to `jobs-api.ts`
+- Added "View All Jobs" button on ingestion page
+
+### Changed
+
+- Updated monorepo version to 1.1.0
+
+---
+
 ## [0.2.0] - 2026-04-25
 
 ### Added

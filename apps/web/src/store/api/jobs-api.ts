@@ -12,6 +12,17 @@ export interface Job {
   updated_at: string;
 }
 
+export interface JobList {
+  id: string;
+  url: string;
+  status: string;
+  crawl_all_docs: boolean;
+  total_documents: number;
+  processed_documents: number;
+  current_audit_round: number;
+  created_at: string;
+}
+
 export interface DocumentItem {
   id: string;
   job_id: string;
@@ -41,6 +52,10 @@ export const jobsApi = apiSlice.injectEndpoints({
     getJobStatus: builder.query<Job, string>({
       query: (id) => `/jobs/${id}/status`,
     }),
+    listJobs: builder.query<JobList[], void>({
+      query: () => "/jobs",
+      providesTags: ["Jobs"],
+    }),
     listDocuments: builder.query<DocumentItem[], string>({
       query: (jobId) => `/jobs/${jobId}/documents`,
       providesTags: ["Documents"],
@@ -62,6 +77,7 @@ export const {
   useCreateJobMutation,
   useGetJobQuery,
   useGetJobStatusQuery,
+  useListJobsQuery,
   useListDocumentsQuery,
   useGetDocumentQuery,
   useDeleteDocumentMutation,

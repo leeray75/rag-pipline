@@ -9,7 +9,7 @@ from src.schemas.chunk import (
 )
 from src.schemas.collection import CollectionInfo, CollectionStats
 from src.schemas.document import DocumentResponse
-from src.schemas.job import JobCreate, JobResponse, JobStatusResponse
+from src.schemas.job import JobCreate, JobResponse, JobStatusResponse, JobListResponse
 from src.schemas.review import (
     BatchApproveRequest,
     ReviewCommentCreate,
@@ -30,6 +30,7 @@ __all__ = [
     "EmbedProgress",
     "EmbedRequest",
     "JobCreate",
+    "JobListResponse",
     "JobResponse",
     "JobStatusResponse",
     "ReviewCommentCreate",

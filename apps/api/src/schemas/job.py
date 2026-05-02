@@ -37,3 +37,18 @@ class JobStatusResponse(BaseModel):
     total_documents: int
     processed_documents: int
     current_audit_round: int
+
+
+class JobListResponse(BaseModel):
+    """Schema for job list API responses."""
+
+    id: uuid.UUID
+    url: str
+    status: str
+    crawl_all_docs: bool
+    total_documents: int
+    processed_documents: int
+    current_audit_round: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
