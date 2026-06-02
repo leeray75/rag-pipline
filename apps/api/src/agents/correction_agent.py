@@ -1,6 +1,7 @@
 """LangGraph Correction Agent — classifies issues and applies corrections."""
 
 import json
+import os
 from pathlib import Path
 
 from langchain_openai import ChatOpenAI
@@ -52,11 +53,11 @@ def receive_report(state: CorrectionState) -> dict:
 
 
 async def classify_issues(state: CorrectionState) -> dict:
-    """Use Qwen to classify each issue as LEGITIMATE or FALSE_POSITIVE."""
+    """Use LLM to classify each issue as LEGITIMATE or FALSE_POSITIVE."""
     llm = ChatOpenAI(
-        base_url="http://spark-8013:4000/v1",
-        model="qwen3-coder-next",
-        api_key="not-needed",
+        base_url=os.getenv("RAG_LLM_ENDPOINT", "http://spark-8013:4000/v1"),
+        model=os.getenv("RAG_LLM_MODEL", "qwen3.6-35b-a3b"),
+        api_key=os.getenv("RAG_LLM_API_KEY", "sk-change-me-in-production"),
         max_tokens=2048,
         temperature=0
     )
@@ -109,9 +110,9 @@ def plan_corrections(state: CorrectionState) -> dict:
 async def apply_corrections(state: CorrectionState) -> dict:
     """Apply LLM-generated corrections to Markdown files."""
     llm = ChatOpenAI(
-        base_url="http://spark-8013:4000/v1",
-        model="qwen3-coder-next",
-        api_key="not-needed",
+        base_url=os.getenv("RAG_LLM_ENDPOINT", "http://spark-8013:4000/v1"),
+        model=os.getenv("RAG_LLM_MODEL", "qwen3.6-35b-a3b"),
+        api_key=os.getenv("RAG_LLM_API_KEY", "sk-change-me-in-production"),
         max_tokens=4096,
         temperature=0
     )

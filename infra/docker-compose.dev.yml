@@ -41,6 +41,12 @@ services:
       - RAG_A2A_BASE_URL=http://localhost:8000
       - RAG_A2A_STREAMING_ENABLED=true
       - RAG_A2A_PUSH_NOTIFICATIONS_ENABLED=false
+      # --- LLM Configuration (OpenAI-compatible endpoint) ---
+      - RAG_LLM_ENDPOINT=http://spark-8013:4000/v1
+      - RAG_LLM_MODEL=qwen3.6-35b-a3b
+      - RAG_LLM_API_KEY=sk-change-me-in-production
+      - RAG_LLM_TEMPERATURE=0.3
+      - RAG_LLM_MAX_TOKENS=4096
     labels:
       - "traefik.enable=true"
       # A2A Audit Agent routes

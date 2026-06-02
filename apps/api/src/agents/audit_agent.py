@@ -47,7 +47,7 @@ class AuditAgent:
     Workflow nodes:
     1. load_documents - Load documents from staging directory
     2. validate_schema - Validate Markdown schema and frontmatter
-    3. assess_quality - Use Claude LLM for quality assessment
+    3. assess_quality - Use LLM for quality assessment
     4. check_duplicates - Detect near-duplicate documents
     5. compile_report - Compile final audit report
     6. save_report - Save report to disk
@@ -62,8 +62,8 @@ class AuditAgent:
         """Initialize the audit agent.
 
         Args:
-            anthropic_api_key: API key for Claude LLM (optional, deprecated)
-            openai_api_key: API key for OpenAI LLM (optional)
+            anthropic_api_key: API key for legacy Claude support (optional, deprecated)
+            openai_api_key: Fallback API key for OpenAI-compatible endpoint (optional)
             config: Additional configuration
         """
         self.config = config or {}
@@ -88,13 +88,13 @@ class AuditAgent:
         """Initialize language models."""
         # OpenAI-compatible endpoint for quality assessment (replacement for Claude)
         self.claude = ChatOpenAI(
-            base_url="http://spark-8013:4000/v1",
-            model="qwen3-coder-next",
-            api_key="not-needed",
+            base_url=os.getenv("RAG_LLM_ENDPOINT", "http://spark-8013:4000/v1"),
+            model=os.getenv("RAG_LLM_MODEL", "qwen3.6-35b-a3b"),
+            api_key=os.getenv("RAG_LLM_API_KEY", "sk-change-me-in-production"),
             temperature=0.3,
             max_tokens=4096
         )
-        logger.info("audit_agent.claude_initialized", model="qwen3-coder-next", endpoint="http://spark-8013:4000/v1")
+        logger.info("audit_agent.llm_initialized", model=os.getenv("RAG_LLM_MODEL", "qwen3.6-35b-a3b"), endpoint=os.getenv("RAG_LLM_ENDPOINT", "http://spark-8013:4000/v1"))
 
         # OpenAI for other tasks (optional, used only if API key provided)
         openai_key = openai_api_key or os.getenv("OPENAI_API_KEY")
@@ -225,7 +225,7 @@ class AuditAgent:
         return {"state": audit_state}
 
     async def _assess_quality(self, state: AuditGraphState) -> AuditGraphState:
-        """Assess document quality using Claude LLM."""
+        """Assess document quality using LLM."""
         audit_state = state["state"]
 
         # Quality assessment prompt
@@ -266,7 +266,7 @@ Content:
 Please provide your assessment as JSON only (no markdown formatting)."""
 
             try:
-                # Get quality assessment from Claude
+                # Get quality assessment from LLM
                 messages = [
                     SystemMessage(content=system_prompt),
                     HumanMessage(content=user_message),

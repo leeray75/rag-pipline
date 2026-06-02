@@ -249,6 +249,26 @@ To verify Phase 1 completion, ensure:
 
 ---
 
+## [0.3.0] - 2026-06-02
+
+### Changed
+
+- **LLM Model Update**: Updated all agents (audit, correction, crawler) to use `qwen3.6-35b-a3b` model instead of `qwen3-coder-next`
+- **Environment Variable Configuration**: Refactored LLM configuration in all agents to use environment variables (`RAG_LLM_ENDPOINT`, `RAG_LLM_API_KEY`, `RAG_LLM_MODEL`) instead of hardcoded values
+- **API Key Default**: Changed default API key from `not-needed` to `sk-change-me-in-production` for better security awareness
+- **Docker Compose**: Added LLM environment variables directly to docker-compose.yml and docker-compose.dev.yml for containerized deployments
+
+### Added
+
+- **Config Class**: Added LLM settings to the `Settings` config class (`llm_endpoint`, `llm_model`, `llm_api_key`, `llm_temperature`, `llm_max_tokens`)
+- **Documentation**: Added LLM configuration documentation in `.env.example` with full configuration reference
+
+### Removed
+
+- **Hardcoded LLM Values**: Removed hardcoded LLM endpoint, model, and API key from agent files (now use environment variables)
+
+---
+
 ## [Unreleased]
 
 ### Changed
