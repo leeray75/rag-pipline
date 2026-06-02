@@ -18,7 +18,7 @@ URL → Fetch → Convert → Audit Agent → Correction Agent → Human Review 
 ### Key Features
 
 - **Automated Content Discovery**: Crawl documentation sites and discover linked pages using static and browser rendering modes
-- **AI-Powered Quality Control**: Schema validation and quality assessment using LangGraph agents with OpenAI-compatible LLM (qwen3-coder-next)
+- **AI-Powered Quality Control**: Schema validation and quality assessment using LangGraph agents with OpenAI-compatible LLM (qwen3.6-35b-a3b)
 - **Human-in-the-Loop Review**: Interactive review dashboard with Monaco editor, diff viewer, and approval workflow
 - **Vector Embeddings**: Local ONNX embeddings with FastEmbed (BAAI/bge-small-en-v1.5)
 - **Vector Search**: Qdrant integration for semantic search and RAG retrieval
@@ -402,4 +402,4 @@ For issues and questions:
 
 ---
 
-*Last updated: 2026-04-23*
+*Last updated: 2026-06-02*

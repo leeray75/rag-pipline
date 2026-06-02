@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     a2a_streaming_enabled: bool = True
     a2a_push_notifications_enabled: bool = False
 
+    # LLM (OpenAI-compatible endpoint)
+    llm_endpoint: str = "http://spark-8013:4000/v1"
+    llm_model: str = "qwen3.6-35b-a3b"
+    llm_api_key: str = "sk-change-me-in-production"
+    llm_temperature: float = 0.3
+    llm_max_tokens: int = 4096
+
     model_config = {"env_prefix": "RAG_", "env_file": ".env"}
 
 

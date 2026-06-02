@@ -33,6 +33,12 @@ services:
       - EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
       - EMBEDDING_BATCH_SIZE=100
       - QDRANT_URL=http://qdrant:6333
+      # --- LLM Configuration (OpenAI-compatible endpoint) ---
+      - RAG_LLM_ENDPOINT=http://spark-8013:4000/v1
+      - RAG_LLM_MODEL=qwen3.6-35b-a3b
+      - RAG_LLM_API_KEY=sk-change-me-in-production
+      - RAG_LLM_TEMPERATURE=0.3
+      - RAG_LLM_MAX_TOKENS=4096
     labels:
       - "traefik.enable=true"
       # Default API router
