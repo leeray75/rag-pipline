@@ -134,6 +134,45 @@ INFO:     127.0.0.1:39056 - "POST /api/v1/ingest/jobs/075389db-11f9-4807-8538-f0
 |------|--------|
 | `apps/api/src/models/chunk.py` | Added `CRAWLING`, `AUDITING` to JobStatus enum; Changed `now()` to `func.now()` |
 | `apps/api/src/schemas/job.py` | Made `total_documents`, `processed_documents`, `current_audit_round` optional |
+| `apps/web/.env.example` | Created with `NEXT_PUBLIC_API_URL=http://localhost/api/v1` |
+| `apps/web/.env.local` | Created with `NEXT_PUBLIC_API_URL=http://localhost/api/v1` (local only, not committed) |
+
+---
+
+## Web UI Fix - Jobs Page Not Loading
+
+### Problem
+The Next.js frontend's `/jobs` page was stuck on "Loading jobs..." and no jobs appeared in the UI despite jobs existing in the database.
+
+### Root Cause
+The frontend's API slice (`apps/web/src/store/api/api-slice.ts`) used the default URL `http://localhost:8000/api/v1` when `NEXT_PUBLIC_API_URL` was not set. However, the API container (`infra-api-1`) is not directly accessible on port 8000 from the host - it's behind Traefik reverse proxy at `http://localhost/api/v1`.
+
+### Diagnosis
+1. Used Chrome DevTools MCP to navigate to `http://localhost/jobs`
+2. Page showed "Loading jobs..." with no console errors
+3. Network tab showed `GET http://localhost:8000/api/v1/jobs` stuck in pending state
+4. Direct curl test confirmed: `curl: (7) Failed to connect to localhost port 8000`
+5. Docker container inspection showed API port 8000 not exposed to host
+
+### Solution
+Created `.env.local` and `.env.example` with:
+```env
+NEXT_PUBLIC_API_URL=http://localhost/api/v1
+```
+
+This routes all API calls through Traefik, which properly forwards to the API container.
+
+### Verification
+After rebuilding the web container with `docker compose -f infra/docker-compose.yml up -d --no-deps --build web`:
+- Navigated to `http://localhost/jobs` in browser
+- All 4 jobs now display correctly in the table
+- Job `075389db-11f9-4807-8538-f09096e1bfd6` (test job) visible with status `crawling`
+
+### Files Added
+| File | Purpose |
+|------|---------|
+| `apps/web/.env.example` | Template for required environment variables (committed) |
+| `apps/web/.env.local` | Local development override (gitignored, not committed) |
 
 ## Conclusion
 

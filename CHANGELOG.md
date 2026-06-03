@@ -269,17 +269,21 @@ To verify Phase 1 completion, ensure:
 
 ---
 
-## [1.2.1] - 2026-06-02
+## [1.2.2] - 2026-06-02
 
 ### Fixed
 
 - **JobStatus Enum**: Added missing `CRAWLING` and `AUDITING` status values to `JobStatus` enum in `src/models/chunk.py`
 - **Database Timestamps**: Changed `server_default="now()"` and `onupdate="now()"` to `func.now()` in `IngestionJob` and `VectorCollection` models to fix asyncpg type error
 - **Pydantic Schema**: Made `total_documents`, `processed_documents`, and `current_audit_round` optional (`int | None`) in job response schemas to handle null database values
+- **Web UI Jobs Page**: Fixed `/jobs` page stuck on "Loading jobs..." by adding `NEXT_PUBLIC_API_URL=http://localhost/api/v1` to `.env.local` and `.env.example`
+  - Root cause: Frontend was calling `http://localhost:8000/api/v1` directly, but API is behind Traefik at `http://localhost/api/v1`
+  - Used Chrome DevTools MCP to diagnose: network request stuck in pending state, curl confirmed connection refused on port 8000
 
 ### Added
 
 - Ingestion pipeline test summary report (`ai-workspace/summary-reports/ingestion-test-summary-2026-06-02.md`)
+- Web app environment config: `apps/web/.env.example` with `NEXT_PUBLIC_API_URL=http://localhost/api/v1`
 
 ### Changed
 
