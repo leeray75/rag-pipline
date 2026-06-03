@@ -17,6 +17,7 @@ from sqlalchemy import (
     JSON,
     Boolean,
     Float,
+    func,
 )
 from sqlalchemy.orm import relationship
 
@@ -27,7 +28,9 @@ class JobStatus(str, Enum):
     """Enum for job status values."""
 
     PENDING = "pending"
+    CRAWLING = "crawling"
     PROCESSING = "processing"
+    AUDITING = "auditing"
     COMPLETED = "completed"
     FAILED = "failed"
 
@@ -108,13 +111,13 @@ class VectorCollection(Base):
     # Timestamps
     created_at = Column(
         DateTime(timezone=True),
-        server_default="now()",
+        server_default=func.now(),
         nullable=False,
     )
     updated_at = Column(
         DateTime(timezone=True),
-        server_default="now()",
-        onupdate="now()",
+        server_default=func.now(),
+        onupdate=func.now(),
         nullable=False,
     )
 
@@ -138,13 +141,13 @@ class IngestionJob(Base):
     # Timestamps
     created_at = Column(
         DateTime(timezone=True),
-        server_default="now()",
+        server_default=func.now(),
         nullable=False,
     )
     updated_at = Column(
         DateTime(timezone=True),
-        server_default="now()",
-        onupdate="now()",
+        server_default=func.now(),
+        onupdate=func.now(),
         nullable=False,
     )
 

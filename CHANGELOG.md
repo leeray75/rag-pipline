@@ -269,7 +269,17 @@ To verify Phase 1 completion, ensure:
 
 ---
 
-## [Unreleased]
+## [1.2.1] - 2026-06-02
+
+### Fixed
+
+- **JobStatus Enum**: Added missing `CRAWLING` and `AUDITING` status values to `JobStatus` enum in `src/models/chunk.py`
+- **Database Timestamps**: Changed `server_default="now()"` and `onupdate="now()"` to `func.now()` in `IngestionJob` and `VectorCollection` models to fix asyncpg type error
+- **Pydantic Schema**: Made `total_documents`, `processed_documents`, and `current_audit_round` optional (`int | None`) in job response schemas to handle null database values
+
+### Added
+
+- Ingestion pipeline test summary report (`ai-workspace/summary-reports/ingestion-test-summary-2026-06-02.md`)
 
 ### Changed
 
