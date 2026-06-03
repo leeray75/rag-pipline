@@ -20,9 +20,9 @@ class JobResponse(BaseModel):
     url: str
     status: str
     crawl_all_docs: bool
-    total_documents: int
-    processed_documents: int
-    current_audit_round: int
+    total_documents: int | None = None
+    processed_documents: int | None = None
+    current_audit_round: int | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -34,9 +34,9 @@ class JobStatusResponse(BaseModel):
 
     id: uuid.UUID
     status: str
-    total_documents: int
-    processed_documents: int
-    current_audit_round: int
+    total_documents: int | None = None
+    processed_documents: int | None = None
+    current_audit_round: int | None = None
 
 
 class JobListResponse(BaseModel):
@@ -46,9 +46,9 @@ class JobListResponse(BaseModel):
     url: str
     status: str
     crawl_all_docs: bool
-    total_documents: int
-    processed_documents: int
-    current_audit_round: int
+    total_documents: int | None = None
+    processed_documents: int | None = None
+    current_audit_round: int | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
