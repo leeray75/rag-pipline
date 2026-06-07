@@ -269,6 +269,28 @@ To verify Phase 1 completion, ensure:
 
 ---
 
+## [1.2.3] - 2026-06-07
+
+### Added
+
+- **Job Delete**: Added `DELETE /jobs/{job_id}` API endpoint for complete job removal
+  - Deletes staging files (HTML, Markdown) from the job directory
+  - Cascades delete to all associated records: documents, chunks, vector collections, review decisions, audit reports
+  - Returns 204 No Content on success
+  - Logs deletion event with structlog
+- **Frontend Delete Button**: Added "Delete" button to Jobs page actions column
+  - Uses RTK Query `useDeleteJobMutation` hook
+  - Confirmation dialog via `confirm()` before deletion
+  - Shows "Deleting..." loading state
+  - Styled in red to indicate destructive action
+  - Automatically refreshes job list after successful deletion
+
+### Fixed
+
+- **View Button**: The "View" button in the Jobs table still has no onClick handler (pre-existing issue)
+
+---
+
 ## [1.2.2] - 2026-06-02
 
 ### Fixed

@@ -9,7 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useListJobsQuery } from "@/store/api/jobs-api";
+import { useListJobsQuery, useDeleteJobMutation } from "@/store/api/jobs-api";
+import { useCallback } from "react";
 
 export default function JobsPage() {
   const { data: jobs, isLoading, error } = useListJobsQuery();
@@ -77,10 +78,11 @@ export default function JobsPage() {
                     <TableCell>
                       {new Date(job.created_at).toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right flex gap-2 justify-end">
                       <Button variant="ghost" size="sm">
                         View
                       </Button>
+                      <DeleteJobButton jobId={job.id} />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -90,5 +92,34 @@ export default function JobsPage() {
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+function DeleteJobButton({ jobId }: { jobId: string }) {
+  const [deleteJob, { isLoading }] = useDeleteJobMutation();
+
+  const handleDelete = useCallback(() => {
+    if (confirm(`Are you sure you want to delete this job? This action cannot be undone.`)) {
+      deleteJob(jobId);
+    }
+  }, [deleteJob, jobId]);
+
+  if (isLoading) {
+    return (
+      <Button variant="ghost" size="sm" disabled className="text-red-500">
+        Deleting...
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleDelete}
+      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+    >
+      Delete
+    </Button>
   );
 }

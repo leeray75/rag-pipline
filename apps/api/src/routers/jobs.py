@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
-from src.models import Document, IngestionJob, JobStatus
+from src.models import AuditReport, ChunkRecord, Document, IngestionJob, JobStatus, ReviewDecision, VectorCollection
 from src.schemas import DocumentResponse, JobCreate, JobListResponse, JobResponse, JobStatusResponse
 from src.workers.crawl_tasks import start_crawl_pipeline
 
@@ -141,3 +141,57 @@ async def delete_document(job_id: uuid.UUID, doc_id: uuid.UUID, db: AsyncSession
 
     await db.delete(doc)
     await db.commit()
+
+
+@router.delete("/jobs/{job_id}", status_code=204)
+async def delete_job(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Cancel and delete an ingestion job and all associated data.
+    
+    Removes the job from the database, deletes staging files, and
+    removes all associated documents, chunks, and vector collections.
+    """
+    result = await db.execute(select(IngestionJob).where(IngestionJob.id == job_id))
+    job = result.scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    # Delete staging files
+    job_dir = STAGING_DIR / str(job_id)
+    if job_dir.exists():
+        import shutil
+        shutil.rmtree(job_dir)
+
+    # Delete associated documents (and their files)
+    docs_result = await db.execute(select(Document).where(Document.job_id == job_id))
+    for doc in docs_result.scalars().all():
+        for path_str in [doc.raw_html_path, doc.markdown_path]:
+            if path_str:
+                p = Path(path_str)
+                if p.exists():
+                    p.unlink()
+        await db.delete(doc)
+
+    # Delete chunks
+    chunks_result = await db.execute(select(ChunkRecord).where(ChunkRecord.job_id == job_id))
+    for chunk in chunks_result.scalars().all():
+        await db.delete(chunk)
+
+    # Delete vector collections
+    vcs_result = await db.execute(select(VectorCollection).where(VectorCollection.job_id == job_id))
+    for vc in vcs_result.scalars().all():
+        await db.delete(vc)
+
+    # Delete review decisions
+    rds_result = await db.execute(select(ReviewDecision).where(ReviewDecision.job_id == job_id))
+    for rd in rds_result.scalars().all():
+        await db.delete(rd)
+
+    # Delete audit reports
+    ars_result = await db.execute(select(AuditReport).where(AuditReport.job_id == job_id))
+    for ar in ars_result.scalars().all():
+        await db.delete(ar)
+
+    await db.delete(job)
+    await db.commit()
+
+    logger.info("job_deleted", job_id=str(job_id))
