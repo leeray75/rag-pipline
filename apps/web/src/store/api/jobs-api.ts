@@ -70,6 +70,13 @@ export const jobsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Documents"],
     }),
+    deleteJob: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/jobs/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Jobs"],
+    }),
   }),
 });
 
@@ -81,4 +88,5 @@ export const {
   useListDocumentsQuery,
   useGetDocumentQuery,
   useDeleteDocumentMutation,
+  useDeleteJobMutation,
 } = jobsApi;

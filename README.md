@@ -4,6 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-purple.svg)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2+-black.svg)](https://nextjs.org/)
+[![Version](https://img.shields.io/badge/version-1.2.3-blue.svg)](https://github.com/leeray75/rag-pipline/releases)
 
 A production-grade document ingestion pipeline that crawls documentation websites, converts HTML to structured Markdown, validates quality via AI agents, and ingests into a Qdrant vector database for RAG (Retrieval-Augmented Generation) retrieval.
 
@@ -361,6 +362,7 @@ rag-pipeline/
 | Phase 6 | ✅ Complete | Chunking, Embedding, Qdrant Integration |
 | Phase 7 | ✅ Complete | MCP Server, Observability, Auth, Production Hardening |
 | Phase 8 | ✅ Complete | Jobs List Page - Frontend job listing table |
+| Phase 9 | ✅ Complete | Job Delete - Frontend delete button with backend endpoint |
 
 ## Technology Stack
 
@@ -402,4 +404,4 @@ For issues and questions:
 
 ---
 
-*Last updated: 2026-06-02*
+*Last updated: 2026-06-07*

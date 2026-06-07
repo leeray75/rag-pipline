@@ -282,6 +282,40 @@ DELETE /api/v1/jobs/{id}/documents/{doc_id}
 
 ---
 
+### Delete Job (Cancel)
+
+Cancel and delete an ingestion job along with all associated data (staging files, documents, chunks, collections).
+
+**Endpoint**
+
+```
+DELETE /api/v1/jobs/{id}
+```
+
+**Response (204 No Content)**
+
+**Error Response (404 Not Found)**
+
+```json
+{
+  "detail": "Job not found"
+}
+```
+
+**Behavior:**
+- Deletes all staging files (HTML, Markdown) from `/app/data/staging/{job_id}/`
+- Removes all associated database records: documents, chunks, vector collections, review decisions, audit reports
+- Removes the job record itself
+- Logs the deletion event
+
+**Example:**
+
+```bash
+curl -X DELETE http://localhost/api/v1/jobs/550e8400-e29b-41d4-a716-446655440000
+```
+
+---
+
 ## Audit
 
 ### Trigger Audit
@@ -844,4 +878,4 @@ Authorization: Bearer <token>
 
 ---
 
-*Last updated: 2026-04-23*
+*Last updated: 2026-06-07*
