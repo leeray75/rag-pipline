@@ -299,8 +299,57 @@ docker compose -f infra/docker-compose.yml up -d --force-recreate api celery-wor
 | `c02f6ea` | docs: add crawl pipeline fix summary report |
 | `e7179ac` | fix: use sqlalchemy.sql.func instead of sqlalchemy.func (deprecated import) |
 | `74272a4` | fix: fix alembic migration chain (2026_04_19_0127 down_revision) |
+| `810a35e` | docs: update summary report with deployment details and additional fixes |
+| `NEW` | fix: register crawl tasks by importing crawl_tasks in celery_app |
+
+---
+
+### Fix 4: Celery Worker Not Recognizing Crawl Tasks (CRITICAL)
+
+**Problem**: Celery worker logs showed `KeyError: 'crawl.fetch_seed_url'` and `Received unregistered task of type 'crawl.fetch_seed_url'`. The worker only knew about `ingest.chunk_job` and `ingest.embed_job` tasks, but NOT any of the crawl tasks.
+
+**Root Cause**: The `celery_app.autodiscover_tasks(["src.workers"])` call only discovers tasks in files named `tasks.py` within the module. The crawl tasks are defined in `crawl_tasks.py`, which was never imported when the Celery app started, so the tasks were never registered with Celery.
+
+**Evidence from worker logs**:
+```
+celery-worker-1  | [tasks]
+celery-worker-1  |   . ingest.chunk_job
+celery-worker-1  |   . ingest.embed_job
+celery-worker-1  | 
+celery-worker-1  | [2026-06-09 02:30:00,031: ERROR/MainProcess] Received unregistered task of type 'crawl.reap_stuck_jobs'.
+celery-worker-1  | [2026-06-09 02:37:02,804: ERROR/MainProcess] Received unregistered task of type 'crawl.fetch_seed_url'.
+```
+
+**Fix**: Added explicit import of `src.workers.crawl_tasks` in `celery_app.py` after the autodiscover call:
+
+```python
+# Auto-discover tasks in workers module
+celery_app.autodiscover_tasks(["src.workers"])
+
+# Explicitly import crawl_tasks to register crawl.* tasks with Celery
+import src.workers.crawl_tasks  # noqa: F401
+```
+
+**Verification**: After rebuild and restart, the worker now shows all 9 tasks:
+```
+celery-worker-1  | [tasks]
+celery-worker-1  |   . crawl.discover_links
+celery-worker-1  |   . crawl.fan_out_and_finalize
+celery-worker-1  |   . crawl.fetch_and_convert_page
+celery-worker-1  |   . crawl.fetch_seed_url
+celery-worker-1  |   . crawl.finalize_crawl
+celery-worker-1  |   . crawl.handle_chord_error
+celery-worker-1  |   . crawl.reap_stuck_jobs
+celery-worker-1  |   . ingest.chunk_job
+celery-worker-1  |   . ingest.embed_job
+```
+
+**Impact**: This was the PRIMARY reason jobs were stuck at `CRAWLING` status. Even though all the other fixes were in place, the crawl tasks could never execute because the Celery worker didn't know they existed.
+
+**File**: `apps/api/src/workers/celery_app.py`
 
 ---
 
 *Report generated: 2026-06-08*
 *Report updated: 2026-06-08 (deployment details added)*
+*Report updated: 2026-06-08 (crawl task registration fix added)*
