@@ -34,3 +34,7 @@ celery_app.conf.beat_schedule = {
 
 # Auto-discover tasks in workers module
 celery_app.autodiscover_tasks(["src.workers"])
+
+# Explicitly import crawl_tasks to register crawl.* tasks with Celery
+# This must be done after autodiscover to ensure tasks are registered
+import src.workers.crawl_tasks  # noqa: F401
