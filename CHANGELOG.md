@@ -269,6 +269,45 @@ To verify Phase 1 completion, ensure:
 
 ---
 
+## [1.2.4] - 2026-06-08
+
+### Added
+
+- **Job Retry Endpoint**: Added `POST /jobs/{job_id}/retry` API endpoint for recovering stuck or failed jobs
+  - Uses conditional SQL update to prevent concurrent retries (returns HTTP 409 if job is not in FAILED or CRAWLING state)
+  - Revokes any existing Celery task for the job before re-queuing via `celery_app.control.revoke()`
+  - Stores `celery_task_id` on the `IngestionJob` model for task revocation
+  - Added `celery_task_id` column to `IngestionJob` model with Alembic migration
+- **Sync DB Engine**: Added synchronous SQLAlchemy engine (`sync_engine`) and `SyncSession` to `database.py` for use in Celery workers (avoids `asyncio.run()` issues with gevent/eventlet)
+- **CrawlBaseTask**: Created base Celery task class with `on_failure` handler that automatically updates job status to `FAILED`
+- **Chord Error Handler**: Added `handle_crawl_chord_error` task as `on_error` callback for crawl chord failures
+- **Stuck Job Reaper**: Added `reap_stuck_jobs` periodic Celery Beat task that marks jobs stuck in `CRAWLING` for >30 minutes as `FAILED`
+  - Runs every 30 minutes via Celery Beat schedule
+  - Added `celery-beat` service to Docker Compose (dev and prod)
+- **Playwright Cleanup**: Added `try/finally` blocks in `fetch_with_browser()` to ensure browser and context are always closed, preventing resource leaks on timeout
+- **Broker Reliability**: Added `acks_late=True` and `reject_on_worker_lost=True` to all crawl tasks for message re-queue on worker crash
+- **Dependency**: Added `psycopg2-binary>=2.9.0` to pyproject.toml for sync DB access
+
+### Changed
+
+- **finalize_crawl**: Now updates job status in database using sync session — sets to `COMPLETED` on full success, `PROCESSING` on partial success, `FAILED` on no success
+- **All crawl tasks**: Added `base=CrawlBaseTask`, `time_limit`, `soft_time_limit`, and `SoftTimeLimitExceeded` handling
+- **fan_out_and_finalize**: Now uses chord with `on_error` callback instead of bare chord
+- **start_crawl_pipeline**: Now stores the Celery AsyncResult ID on the job row for revocation on retry
+- **docker-compose.yml / docker-compose.dev.yml**: Added `celery-beat` service with dependency on Redis
+
+### Fixed
+
+- **Stuck jobs**: Jobs that were stuck at `CRAWLING` status due to chord failures, task timeouts, or worker crashes will now be properly recovered via the retry endpoint and automatic reaper task
+- **Chord silent failure**: Chord member failures now trigger `handle_crawl_chord_error` which updates job status to `FAILED`
+- **CELERY_CHORD_UNLOCK_MAX_RETRIES**: Added config to prevent infinite chord unlock retries
+
+### Alembic
+
+- Added migration `2026_06_08_2100_add_celery_task_id_to_ingestion_jobs.py` for new `celery_task_id` column
+
+---
+
 ## [1.2.3] - 2026-06-07
 
 ### Added

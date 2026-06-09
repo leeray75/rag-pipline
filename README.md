@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-purple.svg)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2+-black.svg)](https://nextjs.org/)
-[![Version](https://img.shields.io/badge/version-1.2.3-blue.svg)](https://github.com/leeray75/rag-pipline/releases)
+[![Version](https://img.shields.io/badge/version-1.2.4-blue.svg)](https://github.com/leeray75/rag-pipline/releases)
 
 A production-grade document ingestion pipeline that crawls documentation websites, converts HTML to structured Markdown, validates quality via AI agents, and ingests into a Qdrant vector database for RAG (Retrieval-Augmented Generation) retrieval.
 
@@ -94,7 +94,7 @@ docker compose logs -f
 
 ```bash
 # Create an ingestion job
-curl -X POST http://localhost:8000/api/v1/jobs \
+curl -X POST http://localhost/api/v1/jobs \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://example.com/docs",
@@ -102,13 +102,16 @@ curl -X POST http://localhost:8000/api/v1/jobs \
   }'
 
 # Trigger the audit workflow
-curl -X POST http://localhost:8000/api/v1/jobs/{job_id}/audit
+curl -X POST http://localhost/api/v1/jobs/{job_id}/audit
 
 # Trigger chunking and embedding
-curl -X POST http://localhost:8000/api/v1/ingest/jobs/{job_id}/chunk
-curl -X POST http://localhost:8000/api/v1/ingest/jobs/{job_id}/embed \
+curl -X POST http://localhost/api/v1/ingest/jobs/{job_id}/chunk
+curl -X POST http://localhost/api/v1/ingest/jobs/{job_id}/embed \
   -H "Content-Type: application/json" \
   -d '{"collection_name": "my-docs"}'
+
+# Retry a stuck or failed job
+curl -X POST http://localhost/api/v1/jobs/{job_id}/retry
 ```
 
 ## Architecture
@@ -363,6 +366,19 @@ rag-pipeline/
 | Phase 7 | ✅ Complete | MCP Server, Observability, Auth, Production Hardening |
 | Phase 8 | ✅ Complete | Jobs List Page - Frontend job listing table |
 | Phase 9 | ✅ Complete | Job Delete - Frontend delete button with backend endpoint |
+| Phase 10 | ✅ Complete | Crawl Pipeline Reliability - Job retry endpoint, stuck job reaper, chord error handling, task timeouts, celery-beat service |
+
+## Crawl Pipeline Reliability (Phase 10)
+
+The crawl pipeline includes several reliability features to handle common failure scenarios:
+
+- **Automatic Status Updates**: Job status is updated in the database when crawl tasks complete or fail
+- **Chord Error Handling**: If any task in the parallel crawl group fails, the job is marked as `FAILED`
+- **Task Timeouts**: All crawl tasks have `time_limit` and `soft_time_limit` to prevent hung tasks
+- **Stuck Job Reaper**: A periodic Celery Beat task runs every 30 minutes to mark jobs stuck in `CRAWLING` as `FAILED`
+- **Retry Endpoint**: Use `POST /jobs/{job_id}/retry` to recover stuck or failed jobs
+- **Broker Reliability**: `acks_late=True` and `reject_on_worker_lost=True` ensure messages are re-queued on worker crash
+- **Playwright Cleanup**: Browser processes are always closed in `finally` blocks to prevent resource leaks
 
 ## Technology Stack
 
@@ -404,4 +420,4 @@ For issues and questions:
 
 ---
 
-*Last updated: 2026-06-07*
+*Last updated: 2026-06-08*

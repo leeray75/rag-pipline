@@ -316,6 +316,48 @@ curl -X DELETE http://localhost/api/v1/jobs/550e8400-e29b-41d4-a716-446655440000
 
 ---
 
+### Retry Job
+
+Retry a stuck or failed ingestion job. Only works if the job is in `FAILED` or `CRAWLING` status. Uses a conditional update to prevent concurrent retries (returns HTTP 409 if job is not in a retryable state). Also revokes any existing Celery task for the job before re-queuing.
+
+**Endpoint**
+
+```
+POST /api/v1/jobs/{id}/retry
+```
+
+**Response (200 OK)**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "url": "https://example.com/docs",
+  "status": "crawling",
+  "crawl_all_docs": true,
+  "total_documents": 0,
+  "processed_documents": 0,
+  "current_audit_round": 0,
+  "created_at": "2026-04-19T01:00:00Z",
+  "updated_at": "2026-06-08T00:00:00Z"
+}
+```
+
+**Error Response (409 Conflict)**
+
+```json
+{
+  "detail": "Job is not in a retryable state (must be FAILED or CRAWLING)"
+}
+```
+
+**Example:**
+
+```bash
+curl -X POST http://localhost/api/v1/jobs/550e8400-e29b-41d4-a716-446655440000/retry
+```
+
+---
+
 ## Audit
 
 ### Trigger Audit
@@ -878,4 +920,4 @@ Authorization: Bearer <token>
 
 ---
 
-*Last updated: 2026-06-07*
+*Last updated: 2026-06-08*
