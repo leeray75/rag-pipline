@@ -53,13 +53,15 @@ async def fetch_static(url: str, timeout: float = 30.0) -> FetchResult:
 
 async def fetch_with_browser(url: str, timeout: float = 60000) -> FetchResult:
     """Fetch a URL using Playwright headless Chromium (handles JS-rendered pages)."""
+    browser = None
+    context = None
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
+            context = await browser.new_context()
+            page = await context.new_page()
             await page.goto(url, wait_until="networkidle", timeout=timeout)
             html = await page.content()
-            await browser.close()
             return FetchResult(
                 url=url, html=html, status_code=200,
                 fetch_mode=FetchMode.BROWSER,
@@ -70,6 +72,18 @@ async def fetch_with_browser(url: str, timeout: float = 60000) -> FetchResult:
             url=url, html="", status_code=0,
             fetch_mode=FetchMode.BROWSER, error=str(e),
         )
+    finally:
+        # Always close browser to prevent resource leaks, especially on timeout
+        if browser:
+            try:
+                await browser.close()
+            except Exception:
+                pass  # Browser may already be closed on error
+        if context:
+            try:
+                await context.close()
+            except Exception:
+                pass
 
 
 async def fetch_url(url: str, use_browser: bool = False) -> FetchResult:

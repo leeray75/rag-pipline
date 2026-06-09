@@ -4,12 +4,14 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.func import now
 
 from src.database import get_db
 from src.models import AuditReport, ChunkRecord, Document, IngestionJob, JobStatus, ReviewDecision, VectorCollection
 from src.schemas import DocumentResponse, JobCreate, JobListResponse, JobResponse, JobStatusResponse
+from src.workers.celery_app import celery_app
 from src.workers.crawl_tasks import start_crawl_pipeline
 
 import structlog
@@ -195,3 +197,51 @@ async def delete_job(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     logger.info("job_deleted", job_id=str(job_id))
+
+
+@router.post("/jobs/{job_id}/retry", response_model=JobResponse)
+async def retry_job(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Retry a stuck or failed job. Only works if job is in FAILED or CRAWLING status.
+    
+    Uses a conditional update to prevent concurrent retries. Also revokes
+    any existing Celery task for this job before re-queuing.
+    """
+    # Conditional update: only succeed if job is in FAILED or CRAWLING
+    result = await db.execute(
+        update(IngestionJob)
+        .where(
+            IngestionJob.id == job_id,
+            IngestionJob.status.in_([JobStatus.FAILED, JobStatus.CRAWLING]),
+        )
+        .values(status=JobStatus.PENDING, updated_at=now())
+        .returning(IngestionJob)
+    )
+    job = result.scalar_one_or_none()
+    if not job:
+        raise HTTPException(
+            status_code=409,
+            detail="Job is not in a retryable state (must be FAILED or CRAWLING)"
+        )
+
+    # Revoke any existing Celery tasks for this job before re-queuing
+    celery_task_id = getattr(job, "celery_task_id", None)
+    if celery_task_id:
+        try:
+            celery_app.control.revoke(celery_task_id, terminate=True, signal="SIGKILL")
+            logger.info("revoked_old_task", job_id=str(job_id), task_id=celery_task_id)
+        except Exception as e:
+            logger.warning("failed_to_revoke_task", job_id=str(job_id), task_id=celery_task_id, error=str(e))
+
+    # Start fresh pipeline
+    start_crawl_pipeline(
+        job_id=str(job.id),
+        url=str(job.url),
+        crawl_all=job.crawl_all_docs,
+    )
+    job.status = JobStatus.CRAWLING
+    job.celery_task_id = None  # Will be updated by the pipeline
+    await db.commit()
+    await db.refresh(job)
+
+    logger.info("job_retry_started", job_id=str(job.id), url=str(job.url))
+    return job

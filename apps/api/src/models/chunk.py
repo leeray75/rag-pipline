@@ -19,6 +19,7 @@ from sqlalchemy import (
     Float,
     func,
 )
+from sqlalchemy import String as StringCol
 from sqlalchemy.orm import relationship
 
 from src.database import Base
@@ -137,6 +138,7 @@ class IngestionJob(Base):
     total_documents = Column(Integer, nullable=True)
     processed_documents = Column(Integer, nullable=True, default=0)
     current_audit_round = Column(Integer, nullable=True, default=0)
+    celery_task_id = Column(String(length=255), nullable=True)
 
     # Timestamps
     created_at = Column(
