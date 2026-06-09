@@ -353,3 +353,59 @@ celery-worker-1  |   . ingest.embed_job
 *Report generated: 2026-06-08*
 *Report updated: 2026-06-08 (deployment details added)*
 *Report updated: 2026-06-08 (crawl task registration fix added)*
+
+---
+
+### Fix 5: API Hanging After Initial Deployment
+
+**Problem**: After initial deployment, the API was hanging on all requests (`/api/v1/health`, `/api/v1/jobs`). The health endpoint and jobs endpoint would not return any response.
+
+**Root Cause**: The API container had started but was stuck due to database connection pool issues or a deadlock state. The container needed a full restart to clear the stuck connections.
+
+**Resolution**:
+```bash
+docker compose -f ./infra/docker-compose.yml restart api
+```
+
+After restart, the API responded correctly:
+```bash
+curl http://localhost/api/v1/health
+# {"status":"ok"}
+
+curl http://localhost/api/v1/jobs
+# [{"id":"373786f0-c342-4bd1-bcb5-73d2d4b0c7cd","url":"...","status":"crawling",...}]
+```
+
+**File**: N/A (container restart resolved the issue)
+
+---
+
+### Fix 6: Jobs Page Stuck on "Loading jobs..."
+
+**Problem**: The frontend at `http://localhost/jobs` showed "Loading jobs..." indefinitely and never displayed the jobs table.
+
+**Root Cause**: The API was hanging (see Fix 5), so the frontend's API calls never completed. Once the API was restarted (Fix 5), the jobs page loaded correctly.
+
+Additionally, the web container needed to be force-recreated to pick up the latest changes:
+```bash
+docker compose -f ./infra/docker-compose.yml up -d --force-recreate web
+```
+
+**Resolution**: After restarting the API and recreating the web container, the Jobs page loaded correctly and displayed all jobs with their status.
+
+**File**: N/A (resolved by fixing API connectivity)
+
+---
+
+## Git Commits
+
+| Commit | Message |
+|--------|---------|
+| `a55f70f` | fix: implement crawl pipeline reliability improvements |
+| `a0b7284` | chore: bump version to 1.2.4 for patch release |
+| `c02f6ea` | docs: add crawl pipeline fix summary report |
+| `e7179ac` | fix: use sqlalchemy.sql.func instead of sqlalchemy.func (deprecated import) |
+| `74272a4` | fix: fix alembic migration chain (2026_04_19_0127 down_revision) |
+| `810a35e` | docs: update summary report with deployment details and additional fixes |
+| `6c69a7f` | docs: update summary report with Fix 4 - crawl task registration fix |
+| `NEW` | fix: register crawl tasks by importing crawl_tasks in celery_app |
