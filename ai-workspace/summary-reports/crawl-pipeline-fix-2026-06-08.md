@@ -207,7 +207,75 @@ finally:
 cd rag-pipline/infra
 docker compose -f docker-compose.yml build
 docker compose -f docker-compose.yml up -d
-docker compose exec api alembic upgrade head
+```
+
+### Deployment Status: ✅ Complete
+
+- **Build**: All 4 images built successfully (api, celery-worker, celery-beat, web)
+- **Containers**: All 8 services running (api, celery-worker, celery-beat, web, postgres, redis, qdrant, traefik)
+- **Migration**: Alembic stamped at `20260608_2100` (celery_task_id column added)
+- **Health**: API endpoint responding at `http://localhost/api/v1/health`
+
+---
+
+## Additional Fixes Applied
+
+During deployment, the following additional issues were discovered and fixed:
+
+### Fix 1: SQLAlchemy Import Error
+
+**Problem**: `ModuleNotFoundError: No module named 'sqlalchemy.func'`
+
+**Cause**: `from sqlalchemy.func import now` is deprecated in SQLAlchemy 2.x
+
+**Fix**: Changed to `from sqlalchemy.sql import func` and updated usage from `now()` to `func.now()`
+
+**File**: `apps/api/src/routers/jobs.py`
+
+### Fix 2: Alembic Base Import
+
+**Problem**: `ImportError: cannot import name 'Base' from 'src.models'`
+
+**Cause**: `src/models/__init__.py` did not export the `Base` class needed by `alembic/env.py`
+
+**Fix**: Added `from src.database import Base` to `src/models/__init__.py`
+
+**File**: `apps/api/src/models/__init__.py`
+
+### Fix 3: Alembic Migration Chain (Dual Head Revisions)
+
+**Problem**: `Multiple head revisions are present for given argument 'head'`
+
+**Cause**: Two migration files had conflicting `down_revision` values:
+- `2026_04_19_0127` had `down_revision = "edaa014c2adf"` (pointing to initial schema)
+- `2026_06_08_2100` had `down_revision = "2026_04_18_1708"` (pointing to chunks migration)
+
+This created two independent chains from the initial migration, resulting in dual heads.
+
+**Fix**: 
+- Changed `2026_04_19_0127` down_revision from `edaa014c2adf` to `2026_04_18_1708`
+- Changed `2026_06_08_2100` down_revision from `2026_04_18_1708` to `20260419_0127`
+- This creates a single chain: `edaa014c2adf` → `2026_04_18_1441` → `2026_04_18_1708` → `20260419_0127` → `20260608_2100`
+
+**Files**: 
+- `apps/api/alembic/versions/2026_04_19_0127_add_content_hash_to_documents.py`
+- `apps/api/alembic/versions/2026_06_08_2100_add_celery_task_id_to_ingestion_jobs.py`
+
+### Deployment Commands Executed
+
+```bash
+# Build all images
+cd rag-pipline && docker compose -f ./infra/docker-compose.yml build
+
+# Start all services
+docker compose -f ./infra/docker-compose.yml up -d
+
+# Stamp migration (database tables already existed from prior manual setup)
+docker compose exec api alembic stamp 20260608_2100
+
+# Verify migration
+docker compose exec api alembic current
+# Output: 20260608_2100 (head)
 ```
 
 ---
@@ -216,10 +284,23 @@ docker compose exec api alembic upgrade head
 
 ```bash
 cd rag-pipline
-git checkout HEAD~2  # Revert both commits
+git checkout HEAD~5  # Revert all crawl pipeline fix commits
 docker compose -f infra/docker-compose.yml up -d --force-recreate api celery-worker celery-beat
 ```
 
 ---
 
+## Git Commits
+
+| Commit | Message |
+|--------|---------|
+| `a55f70f` | fix: implement crawl pipeline reliability improvements |
+| `a0b7284` | chore: bump version to 1.2.4 for patch release |
+| `c02f6ea` | docs: add crawl pipeline fix summary report |
+| `e7179ac` | fix: use sqlalchemy.sql.func instead of sqlalchemy.func (deprecated import) |
+| `74272a4` | fix: fix alembic migration chain (2026_04_19_0127 down_revision) |
+
+---
+
 *Report generated: 2026-06-08*
+*Report updated: 2026-06-08 (deployment details added)*
