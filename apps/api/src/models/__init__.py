@@ -4,5 +4,6 @@ from src.models.chunk import ChunkRecord, VectorCollection, IngestionJob, JobSta
 from src.models.document import Document
 from src.models.review import ReviewComment, ReviewDecision
 from src.models.audit import AuditReport
+from src.database import Base
 
-__all__ = ["ChunkRecord", "VectorCollection", "Document", "IngestionJob", "JobStatus", "ReviewComment", "ReviewDecision", "AuditReport"]
+__all__ = ["Base", "ChunkRecord", "VectorCollection", "Document", "IngestionJob", "JobStatus", "ReviewComment", "ReviewDecision", "AuditReport"]

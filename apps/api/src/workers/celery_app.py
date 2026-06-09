@@ -1,6 +1,7 @@
 """Celery application configuration."""
 
 from celery import Celery
+from celery.schedules import crontab
 
 from src.config import settings
 
@@ -19,7 +20,21 @@ celery_app.conf.update(
     task_track_started=True,
     task_acks_late=True,
     worker_prefetch_multiplier=1,
+    # Prevent infinite retries on chord unlock
+    CELERY_CHORD_UNLOCK_MAX_RETRIES = 10,
 )
+
+# Beat schedule for periodic tasks
+celery_app.conf.beat_schedule = {
+    "reap-stuck-jobs": {
+        "task": "crawl.reap_stuck_jobs",
+        "schedule": crontab(minute="*/30"),  # Every 30 minutes
+    },
+}
 
 # Auto-discover tasks in workers module
 celery_app.autodiscover_tasks(["src.workers"])
+
+# Explicitly import crawl_tasks to register crawl.* tasks with Celery
+# This must be done after autodiscover to ensure tasks are registered
+import src.workers.crawl_tasks  # noqa: F401
