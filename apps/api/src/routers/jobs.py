@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.func import now
+from sqlalchemy.sql import func
 
 from src.database import get_db
 from src.models import AuditReport, ChunkRecord, Document, IngestionJob, JobStatus, ReviewDecision, VectorCollection
@@ -213,7 +213,7 @@ async def retry_job(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
             IngestionJob.id == job_id,
             IngestionJob.status.in_([JobStatus.FAILED, JobStatus.CRAWLING]),
         )
-        .values(status=JobStatus.PENDING, updated_at=now())
+        .values(status=JobStatus.PENDING, updated_at=func.now())
         .returning(IngestionJob)
     )
     job = result.scalar_one_or_none()
